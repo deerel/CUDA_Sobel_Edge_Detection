@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
 {
 	Mat src = imread("img\\input\\rickard.jpg", CV_LOAD_IMAGE_COLOR);
 	Mat dst = src.clone();
+	Mat cuda_image = src.clone();
 	int16_t *srcMat = (int16_t *)calloc(src.cols * src.rows, sizeof(int16_t));
 	int16_t *dstMat = (int16_t *)calloc(src.cols * src.rows, sizeof(int16_t));
 
@@ -20,7 +21,7 @@ int main(int argc, char *argv[])
 
 
 	/* Calling cuda functions */
-	cuda_edge_detection(src.clone());
+	cuda_edge_detection(&cuda_image);
 
 
 	/* Sequential part */
