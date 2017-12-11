@@ -17,14 +17,7 @@ void pixelPyth(int16_t *dst, int16_t *gx, int16_t *gy, const int width, const in
 
 void normalize(int16_t *src, const int width, const int height);
 
-int16_t mapToRange(int16_t x, int16_t srcMax, uint16_t dstMax);
-
 void makeImage(int16_t *src, Mat *dst);
 
-void getGaussianKernel(matrix *mat);
-
-void getGxKernel(matrix *mat);
-
-void getGyKernel(matrix *mat);
 
 

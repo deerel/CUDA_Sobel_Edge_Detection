@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "img_functions.h"
+#include "img_cuda.h"
 
 using namespace cv;
 using namespace std;
@@ -17,6 +18,12 @@ int main(int argc, char *argv[])
 	int16_t *gyMat = (int16_t *)calloc(src.cols * src.rows, sizeof(int16_t));
 	matrix *kernel = (matrix*)calloc(1, sizeof(matrix));
 
+
+	/* Calling cuda functions */
+	cuda_edge_detection(src.clone());
+
+
+	/* Sequential part */
 	convertToGrayscale(src, srcMat);
 
 	getGaussianKernel(kernel);
