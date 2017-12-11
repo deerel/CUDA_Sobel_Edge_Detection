@@ -1,27 +1,14 @@
 #include "img_functions.h"
 #include "img_helper.h"
+
 int16_t maxPixel;
 int maxPos;
 
-void convertToGrayscale(Mat src, int16_t *dst)
+void convertToGrayscale(pixel *src, int16_t *dst, int len)
 {
-	Vec3b original;
-	int average;
-
-	for (int r = 0; r < src.rows; r++)
+	for (int i = 0; i < len; i++)
 	{
-		for (int c = 0; c < src.cols; c++)
-		{
-			/* Get color value of pixel at index (r, c) */
-			original = src.at<Vec3b>(r, c);
-
-			/* Average the color values of pixel at index (r, c), ((B+G+R) / 3) */
-			average = (original[0] + original[1] + original[2]) / 3;
-
-			/* Set each color to the average */
-			dst[c + r * src.cols] = (int16_t)average;
-			
-		}
+		dst[i] = (src[i].b + src[i].g + src[i].r) / 3;
 	}
 }
 

@@ -9,7 +9,7 @@ using namespace cv;
 extern int16_t maxPixel;
 extern int maxPos;
 
-void convertToGrayscale(Mat src, int16_t *dst);
+void convertToGrayscale(pixel *src, int16_t *dst, int len);
 
 void pixelMatMul(int16_t *src, int16_t *dst, matrix *mat, int width, int height, bool divide = true);
 
