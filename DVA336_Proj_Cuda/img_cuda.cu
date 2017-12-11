@@ -29,52 +29,10 @@ __global__ void kernel_gaussian(int16_t * src, int16_t * dst, matrix mat, const 
 	int pixelAcc = 0;
 	const int noElements = width * height;
 
-	if (index == 0) {
-		printf("MATRIX\n");
-		for (int i = 0; i < 3; i++)
-		{
-			for (int j = 0; j < 3; j++)
-			{
-				printf("%d,", mat.element[i][j]);
-			}
-			printf("\n");
-		}
-		printf("\n");
-	}
-
-	if (index == 0) {
-		printf("SOURCE SNIPPET\n");
-		for (int i = 0; i < 64; i++)
-		{
-			printf("%d,", src[i]);
-		}
-		printf("\n");
-	}
-
-
-	//while (index < noElements) {
-
-	//	for (int i = 0; i < 3; i++)
-	//	{
-	//		for (int j = 0; j < 3; j++)
-	//		{
-	//			int rowOffset = (i - 1)*width;
-	//			int elementOffset = (j - 1);
-	//			int pixel_index = index + rowOffset + elementOffset;
-
-	//			pixelAcc += mat.element[i][j] * src[pixel_index];
-	//		}
-	//	}
-
-	//	dst[index] = pixelAcc / 16;
-
-
-	//	//dst[index] = src[index];
-	//	index += stride;
-	//}
-
 	while (index < noElements) {
-		if (index > width*2 - 1 && index < width*(height - 2)-1) {
+		/* The if statement make sure that only pixels with eight neigbours are being affected */
+		/*  NOT TOP ROW       && NOT BOTTOM ROW               && NOT FIRST COLUMN && NOT LAST COLUMN        */
+		if (index > width - 1 && index < width*(height - 1)-1 && index%width != 0 && index%width != width-1) {
 			for (int i = 0; i < 3; i++)
 			{
 				for (int j = 0; j < 3; j++)
@@ -84,16 +42,15 @@ __global__ void kernel_gaussian(int16_t * src, int16_t * dst, matrix mat, const 
 					int pixel_index = index + rowOffset + elementOffset;
 
 					pixelAcc += mat.element[i][j] * src[pixel_index];
-					if (index < 3)
-						printf("index %d, pixel_index = %d\n", index, index);
+
 				}
 			}
-
-			if (index < 16)
-				printf("pixelAcc = %d\n", pixelAcc);
-
 		}
-		dst[index] = src[index];
+		else {
+			//element is on the edge
+			pixelAcc = src[index] * 16;
+		}
+		dst[index] = pixelAcc/16;
 		index += stride;
 		pixelAcc = 0;
 	}
@@ -133,7 +90,7 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 
 	/* Make grayskale*/
 	cudaMemcpy(d_src_image, h_src_image, elements * sizeof(pixel), cudaMemcpyHostToDevice);
-	kernel_grayscale << <BLOCKS, THREADS >> >(d_src_image, d_dst_image, widht, height);
+	kernel_grayscale << <BLOCKS, THREADS >> >(d_src_image, d_dst_image, width, height);
 	cudaDeviceSynchronize();
 
 	/* Gaussian Blur */
