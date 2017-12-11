@@ -3,6 +3,7 @@
 
 #include "img_functions.h"
 #include "img_cuda.h"
+#include "img_helper.h"
 
 using namespace cv;
 using namespace std;
@@ -13,6 +14,7 @@ int main(int argc, char *argv[])
 	Mat dst = src.clone();
 	int16_t *srcMat = (int16_t *)calloc(src.cols * src.rows, sizeof(int16_t));
 	int16_t *dstMat = (int16_t *)calloc(src.cols * src.rows, sizeof(int16_t));
+	pixel *img = (pixel*)calloc(src.cols * src.rows, sizeof(pixel));
 
 	int16_t *gxMat = (int16_t *)calloc(src.cols * src.rows, sizeof(int16_t));
 	int16_t *gyMat = (int16_t *)calloc(src.cols * src.rows, sizeof(int16_t));
@@ -26,7 +28,9 @@ int main(int argc, char *argv[])
 
 
 	/* Sequential part */
-	convertToGrayscale(src, srcMat);
+	matToArray(&src, img);
+
+	convertToGrayscale(img, srcMat, src.cols * src.rows);
 
 	getGaussianKernel(kernel);
 	printf("Blur\n");
