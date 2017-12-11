@@ -62,6 +62,8 @@ int main(int argc, char *argv[])
 	imwrite("img\\output\\output.png", dst, compression_params);
 	waitKey();
 
+	printf("Done\n");
+
 	free(srcMat);
 	free(dstMat);
 	free(kernel);
