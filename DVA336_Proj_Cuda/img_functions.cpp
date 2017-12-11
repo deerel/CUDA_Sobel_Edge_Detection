@@ -1,4 +1,5 @@
 #include "img_functions.h"
+#include "img_helper.h"
 int16_t maxPixel;
 int maxPos;
 

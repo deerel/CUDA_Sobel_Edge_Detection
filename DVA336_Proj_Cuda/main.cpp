@@ -11,7 +11,6 @@ int main(int argc, char *argv[])
 {
 	Mat src = imread("img\\input\\rickard.jpg", CV_LOAD_IMAGE_COLOR);
 	Mat dst = src.clone();
-	Mat cuda_image = src.clone();
 	int16_t *srcMat = (int16_t *)calloc(src.cols * src.rows, sizeof(int16_t));
 	int16_t *dstMat = (int16_t *)calloc(src.cols * src.rows, sizeof(int16_t));
 
@@ -21,7 +20,9 @@ int main(int argc, char *argv[])
 
 
 	/* Calling cuda functions */
-	cuda_edge_detection(&cuda_image);
+	Mat cuda_image = src.clone();
+	int16_t * cuda_src = (int16_t *)calloc(src.cols * src.rows, sizeof(int16_t));
+	cuda_edge_detection(cuda_src, &cuda_image);
 
 
 	/* Sequential part */
@@ -43,10 +44,13 @@ int main(int argc, char *argv[])
 
 	normalize(dstMat, src.cols, src.rows);
 
-	makeImage(dstMat, &dst);
+	//makeImage(dstMat, &dst);
+	makeImage(cuda_src, &cuda_image);
 	
-	imshow("Original", src);
-	imshow("Grayscale", dst);
+	//imshow("Original", src);
+	//imshow("Grayscale", dst);
+
+	imshow("Grayscale", cuda_image);
 
 	vector<int> compression_params;
 	compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
