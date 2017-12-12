@@ -65,6 +65,24 @@ __global__ void kernel_normalize() {
 
 }
 
+/* Naive pixel pyth without mapToRange */
+__global__ void kernel_pythagorean(int16_t *dst, int16_t *gx, int16_t *gy, const int width, const int height) {
+	
+	int index = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+
+	int pixelGx, pixelGy;
+	while (index < (width*height))
+	{
+		pixelGx = gx[index] * gx[index];
+		pixelGy = gy[index] * gy[index];
+
+		dst[index] = sqrt(pixelGx + pixelGy);
+
+		index += stride;
+	}
+}
+
 void cuda_edge_detection(int16_t * src, Mat * image) {
 	pixel * h_src_image;
 	int16_t * h_dst_image;
