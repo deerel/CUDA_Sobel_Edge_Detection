@@ -42,7 +42,7 @@ void pixelMatMul(int16_t *src, int16_t *dst, matrix *mat, int width, int height,
 			element = (c + r * width);
 			elementMod = element % width;
 
-			if (r > 0 && c > 0 && r < width - 1 && c < height - 1) {
+			if (r > 0 && c > 0 && r < height - 1 && c < width - 1) {
 				// element got all eight neighbours
 				for (int i = 0; i < 3; i++)
 				{
@@ -115,6 +115,8 @@ void seq_edge_detection(int16_t *src, Mat * image)
 	int width = image->cols;
 	int height = image->rows;
 	int size = width*height;
+
+	printf("Width: %d, Height: %d\n", width, height);
 
 	int16_t *srcMat = (int16_t *)calloc(size, sizeof(int16_t));
 	int16_t *dstMat = (int16_t *)calloc(size, sizeof(int16_t));
