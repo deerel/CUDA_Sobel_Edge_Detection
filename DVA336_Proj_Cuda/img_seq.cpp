@@ -4,7 +4,7 @@
 int16_t maxPixel;
 int maxPos;
 
-void convertToGrayscale(pixel *src, int16_t *dst, int len)
+void convertToGrayscale(pixel *src, int16_t *dst, const int len)
 {
 	for (int i = 0; i < len; i++)
 	{
@@ -28,7 +28,7 @@ void makeImage(int16_t *src, Mat *dst)
 /*
 Neighbour detection: https://stackoverflow.com/questions/32502564/most-efficient-way-to-check-neighbouring-grid
 */
-void pixelMatMul(int16_t *src, int16_t *dst, matrix *mat, int width, int height, bool divide)
+void pixelMatMul(int16_t * src, int16_t *dst, matrix *mat, const int width, const int height, const bool divide)
 {
 	int arrayLen = width * height;
 	int element, rowOffset, elementOffset, index, elementMod;
@@ -54,18 +54,6 @@ void pixelMatMul(int16_t *src, int16_t *dst, matrix *mat, int width, int height,
 
 						pixelAcc += mat->element[i][j] * src[index];
 
-						//if (i == 0 && r != 0)
-						//{
-						//	pixelAcc += mat->element[i][j] * src[(c + r * width) - width + (j - 1)];
-						//}
-						//else if (i == 1)
-						//{
-						//	pixelAcc += mat->element[i][j] * src[(c + r * width) + (j - 1)];
-						//}
-						//else if (i == 2 && r != height-1)
-						//{
-						//	pixelAcc += mat->element[i][j] * src[(c + r * width) + width + (j - 1)];
-						//}
 					}
 				}
 			}
@@ -88,13 +76,14 @@ void pixelPyth(int16_t *dst, int16_t *gx, int16_t *gy, const int width, const in
 	int pixelGx, pixelGy;
 	uint16_t mapVal;
 	maxPixel = 0;
+	const float compressFactor = 255.0f / 1445.0f;
 	
 	for (int i = 0; i < width*height; i++)
 	{
 		pixelGx = gx[i] * gx[i];
 		pixelGy = gy[i] * gy[i];
 		
-		mapVal = mapToRange(sqrt(pixelGx + pixelGy), 1442, 255);
+		mapVal = (int)(sqrtf((float)pixelGx + (float)pixelGy) * compressFactor);
 		dst[i] = mapVal;
 		
 		if (mapVal > maxPixel) {
@@ -104,9 +93,14 @@ void pixelPyth(int16_t *dst, int16_t *gx, int16_t *gy, const int width, const in
 	}
 }
 void normalize(int16_t *src, const int width, const int height) {
-	for (int i = 0; i < width*height; i++)
+
+	const int elements = width * height;
+	const float factor = 255.0f / (float)maxPixel;
+
+	for (int i = 0; i <elements; i++)
 	{
-		src[i] = mapToRange(src[i], maxPixel, 255);
+		//src[i] = mapToRange(src[i], maxPixel, 255);
+		src[i] = src[i] * factor;
 	}
 }
 
@@ -142,5 +136,6 @@ void seq_edge_detection(int16_t *src, Mat * image)
 	pixelPyth(src, gxMat, gyMat, width, height);
 
 	normalize(src, width, height);
+	printf("MAXPIXEL %d\n", maxPixel);
 }
 
