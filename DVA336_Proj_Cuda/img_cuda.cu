@@ -8,7 +8,7 @@
 
 using namespace cv;
 
-#define BLOCKS 512
+#define BLOCKS 256
 #define THREADS 256
 
 __global__ void kernel_grayscale(pixel * src, int16_t * dst, const int width, const int height) {
@@ -115,19 +115,25 @@ __global__ void kernel_findMaxPixel(int16_t *src, const int width, const int hei
 
 	int tid = threadIdx.x;
 	int gid = (blockDim.x * blockIdx.x) + tid;
+	int stride = blockDim.x * gridDim.x;
 	shared[tid] = -INT_MAX;  // 1
 	const int elements = width*height;
 
-	if (gid < elements)
-		shared[tid] = src[gid];
-	__syncthreads();
-
-	for (unsigned int s = blockDim.x / 2; s>0; s >>= 1)
+	while (gid < elements)
 	{
-		if (tid < s && gid < elements)
-			shared[tid] = max(shared[tid], shared[tid + s]);  // 2
+		if (gid < elements)
+			shared[tid] = src[gid];
 		__syncthreads();
+
+		for (unsigned int s = blockDim.x / 2; s>0; s >>= 1)
+		{
+			if (tid < s && gid < elements)
+				shared[tid] = max(shared[tid], shared[tid + s]);  // 2
+			__syncthreads();
+		}
+		gid += stride;
 	}
+	
 	// what to do now?
 	// option 1: save block result and launch another kernel
 	//if (tid == 0)
