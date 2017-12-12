@@ -12,7 +12,7 @@ using namespace std;
 int main(int argc, char *argv[])
 {
 	init_cuda();
-	Mat src = imread("img\\input\\pontus.jpg", CV_LOAD_IMAGE_COLOR);
+	Mat src = imread("img\\input\\dresden_S.jpg", CV_LOAD_IMAGE_COLOR);
 	
 	Mat dst = src.clone();
 	int16_t *dstMat = (int16_t *)calloc(src.cols * src.rows, sizeof(int16_t));
@@ -22,8 +22,13 @@ int main(int argc, char *argv[])
 
 	chrono::high_resolution_clock::time_point start, stop;
 	chrono::duration<float> execTime;
-	float speedup;
 
+
+	float speedup;
+	float cudatime, seqtime;
+
+
+	
 	/* CUDA */
 	printf(".: CUDA :.\n");
 	start = chrono::high_resolution_clock::now();
@@ -34,6 +39,7 @@ int main(int argc, char *argv[])
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("CUDA Exec time:       %f\n\n", execTime.count());
 	speedup = execTime.count();
+	cudatime = execTime.count();
 
 	/* SEQ */
 	printf(".: SEQ  :.\n");
@@ -44,20 +50,23 @@ int main(int argc, char *argv[])
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("SEQ  Exec time:       %f\n\n", execTime.count());
+	seqtime = execTime.count();
 
 	printf("CUDA to SEQ speed up  %f\n", execTime.count() / speedup);
 
-	makeImage(dstMat, &dst);
+
+
+    makeImage(dstMat, &dst);
 	makeImage(cuda_src, &cuda_image);
 	
 	imshow("Seq edges", dst);
 
 	imshow("Cuda edges", cuda_image);
 
-	/*vector<int> compression_params;
+	vector<int> compression_params;
 	compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
 	compression_params.push_back(9);
-	imwrite("img\\output\\output.png", dst, compression_params);*/
+	imwrite("img\\output\\output.png", cuda_image, compression_params);
 	waitKey();
 	getchar();
 

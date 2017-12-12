@@ -2,7 +2,7 @@
 #include "img_seq.h"
 #include "img_helper.h"
 
-#define SEQTIME 1
+#define SEQTIME 0
 
 int16_t maxPixel;
 int maxPos;
@@ -30,10 +30,9 @@ void makeImage(int16_t *src, Mat *dst)
 	}
 
 }
-/*
-Neighbour detection: https://stackoverflow.com/questions/32502564/most-efficient-way-to-check-neighbouring-grid
-*/
-void pixelMatMul(int16_t * src, int16_t *dst, matrix *mat, const int width, const int height, const bool divide)
+
+
+void gaussianBlur(int16_t * src, int16_t *dst, matrix *mat, const int width, const int height)
 {
 	int arrayLen = width * height;
 	int element, rowOffset, elementOffset, index, elementMod;
@@ -64,16 +63,52 @@ void pixelMatMul(int16_t * src, int16_t *dst, matrix *mat, const int width, cons
 			}
 			else {
 				//element is on the edge
-				divide ? pixelAcc = src[element] * 16 : pixelAcc = src[element];
+				pixelAcc = src[element] * 16;
 			}
 
-			divide ? pixelAcc /= 16 : pixelAcc;
+			pixelAcc /= 16;
 			dst[c + r * width] = pixelAcc;
 		}
 	}
+}
 
+void sobel(int16_t * src, int16_t *dst, matrix *mat, const int width, const int height)
+{
+	int arrayLen = width * height;
+	int element, rowOffset, elementOffset, index, elementMod;
 
+	for (int r = 0; r < height; r++)
+	{
+		for (int c = 0; c < width; c++)
+		{
+			int pixel = (int)src[c + r * width];
+			int pixelAcc = 0;
+			element = (c + r * width);
+			elementMod = element % width;
 
+			if (r > 0 && c > 0 && r < height - 1 && c < width - 1) {
+				// element got all eight neighbours
+				for (int i = 0; i < 3; i++)
+				{
+					rowOffset = (i - 1)*width;
+					for (int j = 0; j < 3; j++)
+					{
+						elementOffset = (j - 1);
+						index = element + rowOffset + elementOffset;
+
+						pixelAcc += mat->element[i][j] * src[index];
+
+					}
+				}
+			}
+			else {
+				//element is on the edge
+				pixelAcc = src[element];
+			}
+
+			dst[c + r * width] = pixelAcc;
+		}
+	}
 }
 
 void pixelPyth(int16_t *dst, int16_t *gx, int16_t *gy, const int width, const int height)
@@ -104,7 +139,6 @@ void normalize(int16_t *src, const int width, const int height) {
 
 	for (int i = 0; i <elements; i++)
 	{
-		//src[i] = mapToRange(src[i], maxPixel, 255);
 		src[i] = src[i] * factor;
 	}
 }
@@ -140,7 +174,7 @@ void seq_edge_detection(int16_t *src, Mat * image)
 	start = chrono::high_resolution_clock::now();
 #endif
 	getGaussianKernel(kernel);
-	pixelMatMul(srcMat, dstMat, kernel, width, height, true);
+	gaussianBlur(srcMat, dstMat, kernel, width, height);
 #if SEQTIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
@@ -151,7 +185,7 @@ void seq_edge_detection(int16_t *src, Mat * image)
 	start = chrono::high_resolution_clock::now();
 #endif
 	getGxKernel(kernel);
-	pixelMatMul(dstMat, gxMat, kernel, width, height, false);
+	sobel(dstMat, gxMat, kernel, width, height);
 #if SEQTIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
@@ -162,7 +196,7 @@ void seq_edge_detection(int16_t *src, Mat * image)
 	start = chrono::high_resolution_clock::now();
 #endif
 	getGyKernel(kernel);
-	pixelMatMul(dstMat, gyMat, kernel, width, height, false);
+	sobel(dstMat, gyMat, kernel, width, height);
 #if SEQTIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);

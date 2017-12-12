@@ -11,7 +11,9 @@ extern int maxPos;
 
 void convertToGrayscale(pixel *src, int16_t *dst, const int len);
 
-void pixelMatMul(int16_t * src, int16_t *dst, matrix * mat, const int width, const int height, bool divide = true);
+void gaussianBlur(int16_t * src, int16_t *dst, matrix * mat, const int width, const int height);
+
+void sobel(int16_t * src, int16_t *dst, matrix * mat, const int width, const int height);
 
 void pixelPyth(int16_t *dst, int16_t *gx, int16_t *gy, const int width, const int height);
 

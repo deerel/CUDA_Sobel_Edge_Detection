@@ -12,7 +12,7 @@ using namespace std;
 
 #define THREADS 256
 
-#define CUDATIME 1
+#define CUDATIME 0
 
 __global__ void kernel_grayscale(pixel * src, int16_t * dst, const int elements) {
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
@@ -21,7 +21,6 @@ __global__ void kernel_grayscale(pixel * src, int16_t * dst, const int elements)
 		dst[index] = (int16_t)(src[index].b + src[index].r + src[index].g) / 3;
 }
 
-// Extend this image with a 1 pixel border with value 0;
 __global__ void kernel_gaussian(int16_t * src, int16_t * dst, matrix mat, const int width, const int height) {
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
 	int pixelValue;
@@ -147,7 +146,7 @@ __global__ void kernel_findMaxPixel(int16_t *src, const int elements, int *maxPi
 
 	int tid = threadIdx.x;
 	int gid = (blockDim.x * blockIdx.x) + tid;
-	shared[tid] = -INT_MAX;  // 1
+	shared[tid] = -1;
 
 	if (gid < elements)
 		shared[tid] = src[gid];
@@ -156,16 +155,10 @@ __global__ void kernel_findMaxPixel(int16_t *src, const int elements, int *maxPi
 	for (unsigned int s = blockDim.x / 2; s>0; s >>= 1)
 	{
 		if (tid < s && gid < elements)
-			shared[tid] = max(shared[tid], shared[tid + s]);  // 2
+			shared[tid] = max(shared[tid], shared[tid + s]); 
 		__syncthreads();
 	}
 
-
-	// what to do now?
-	// option 1: save block result and launch another kernel
-	//if (tid == 0)
-	//d_max[blockIdx.x] = shared[tid]; // 3
-	// option 2: use atomics
 	if (tid == 0)
 	{
 		atomicMax(maxPixel, shared[0]);
@@ -217,7 +210,6 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	cudaMalloc((void**)&d_dst_image, elements * sizeof(int16_t));
 	cudaMalloc((void**)&d_result_image, elements * sizeof(int16_t));
 	cudaMalloc((void**)&d_sobelGx_image, elements * sizeof(int16_t));
-	//cudaMalloc((void**)&d_sobelGy_image, elements * sizeof(int16_t));
 	cudaMalloc((void**)&d_maxPixel, sizeof(int));
 #if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
