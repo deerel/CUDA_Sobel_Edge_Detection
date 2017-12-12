@@ -19,5 +19,7 @@ void normalize(int16_t *src, const int width, const int height);
 
 void makeImage(int16_t *src, Mat *dst);
 
+void seq_edge_detection(int16_t *src, Mat * image);
+
 
 

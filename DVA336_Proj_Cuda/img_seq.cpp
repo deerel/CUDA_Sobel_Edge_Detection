@@ -1,4 +1,4 @@
-#include "img_functions.h"
+#include "img_seq.h"
 #include "img_helper.h"
 
 int16_t maxPixel;
@@ -108,7 +108,37 @@ void normalize(int16_t *src, const int width, const int height) {
 	{
 		src[i] = mapToRange(src[i], maxPixel, 255);
 	}
-	printf("Maxpixel %d \n", maxPixel);
 }
 
+void seq_edge_detection(int16_t *src, Mat * image)
+{
+	int width = image->cols;
+	int height = image->rows;
+	int size = width*height;
+
+	int16_t *srcMat = (int16_t *)calloc(size, sizeof(int16_t));
+	int16_t *dstMat = (int16_t *)calloc(size, sizeof(int16_t));
+	pixel *img = (pixel*)calloc(size, sizeof(pixel));
+
+	int16_t *gxMat = (int16_t *)calloc(size, sizeof(int16_t));
+	int16_t *gyMat = (int16_t *)calloc(size, sizeof(int16_t));
+	matrix *kernel = (matrix*)calloc(1, sizeof(matrix));
+
+	matToArray(image, img);
+
+	convertToGrayscale(img, srcMat, size);
+
+	getGaussianKernel(kernel);
+	pixelMatMul(srcMat, dstMat, kernel, width, height, true);
+
+	getGxKernel(kernel);
+	pixelMatMul(dstMat, gxMat, kernel, width, height, false);
+
+	getGyKernel(kernel);
+	pixelMatMul(dstMat, gyMat, kernel, width, height, false);
+
+	pixelPyth(src, gxMat, gyMat, width, height);
+
+	normalize(src, width, height);
+}
 

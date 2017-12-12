@@ -91,11 +91,7 @@ __global__ void kernel_sobel(int16_t * src, int16_t * dst, matrix mat, const int
 	}
 }
 
-__global__ void kernel_normalize() {
-
-}
-
-/* Naive pixel pyth without mapToRange */
+/* Pixel pyth */
 __global__ void kernel_pythagorean(int16_t *dst, int16_t *gx, int16_t *gy, const int width, const int height) {
 	
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
@@ -114,6 +110,50 @@ __global__ void kernel_pythagorean(int16_t *dst, int16_t *gx, int16_t *gy, const
 	}
 }
 
+__global__ void kernel_findMaxPixel(int16_t *src, const int width, const int height, int *maxPixel) {
+	extern __shared__ int shared[];
+
+	int tid = threadIdx.x;
+	int gid = (blockDim.x * blockIdx.x) + tid;
+	shared[tid] = -INT_MAX;  // 1
+	const int elements = width*height;
+
+	if (gid < elements)
+		shared[tid] = src[gid];
+	__syncthreads();
+
+	for (unsigned int s = blockDim.x / 2; s>0; s >>= 1)
+	{
+		if (tid < s && gid < elements)
+			shared[tid] = max(shared[tid], shared[tid + s]);  // 2
+		__syncthreads();
+	}
+	// what to do now?
+	// option 1: save block result and launch another kernel
+	//if (tid == 0)
+	//d_max[blockIdx.x] = shared[tid]; // 3
+	// option 2: use atomics
+	if (tid == 0)
+	{
+		atomicMax(maxPixel, shared[0]);
+	}
+
+}
+
+__global__ void kernel_normalize(int16_t *src, const int width, const int height, int *maxPixel)
+{
+	int index = threadIdx.x + blockIdx.x * blockDim.x;
+	int stride = blockDim.x * gridDim.x;
+	const int elements = width * height;
+	const float factor = 255.0f / (float)*maxPixel;
+
+	while (index < elements)
+	{
+		src[index] = src[index] * factor;
+		index += stride;
+	}
+}
+
 void cuda_edge_detection(int16_t * src, Mat * image) {
 	pixel * h_src_image;
 	int16_t * h_dst_image;
@@ -123,6 +163,7 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	int16_t * d_result_image;
 	int16_t * d_sobelGx_image;
 	int16_t * d_sobelGy_image;
+	int * d_maxPixel;
 
 	const int width = image->cols;
 	const int height = image->rows;
@@ -140,8 +181,9 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	cudaMalloc((void**)&d_result_image, ext_elements * sizeof(int16_t));
 	cudaMalloc((void**)&d_sobelGx_image, ext_elements * sizeof(int16_t));
 	cudaMalloc((void**)&d_sobelGy_image, ext_elements * sizeof(int16_t));
+	cudaMalloc((void**)&d_maxPixel, sizeof(int));
 
-	/* Make grayskale*/
+	/* Make grayscale*/
 	cudaMemcpy(d_src_image, h_src_image, elements * sizeof(pixel), cudaMemcpyHostToDevice);
 	kernel_grayscale <<<BLOCKS, THREADS>>>(d_src_image, d_dst_image, width, height);
 	cudaDeviceSynchronize();
@@ -163,6 +205,14 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 
 	/* Pythagorean with Gx and Gy */
 	kernel_pythagorean <<<BLOCKS, THREADS>>>(d_result_image, d_sobelGx_image, d_sobelGy_image, width, height);
+	cudaDeviceSynchronize();
+
+	/* Map values to max 255, allocate 4*THREADS bytes shared memory */
+	kernel_findMaxPixel<<<BLOCKS,THREADS,4*THREADS>>>(d_result_image, width, height, d_maxPixel);
+	cudaDeviceSynchronize();
+
+	/* Map values to max 255, allocate 4*THREADS bytes shared memory */
+	kernel_normalize <<<BLOCKS, THREADS>>>(d_result_image, width, height, d_maxPixel);
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(src, d_result_image, elements * sizeof(int16_t), cudaMemcpyDeviceToHost);
