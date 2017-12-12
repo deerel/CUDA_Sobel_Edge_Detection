@@ -11,7 +11,8 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	Mat src = imread("img\\input\\golden.jpg", CV_LOAD_IMAGE_COLOR);
+	init_cuda();
+	Mat src = imread("img\\input\\pontus.jpg", CV_LOAD_IMAGE_COLOR);
 	
 	Mat dst = src.clone();
 	int16_t *dstMat = (int16_t *)calloc(src.cols * src.rows, sizeof(int16_t));
@@ -31,7 +32,6 @@ int main(int argc, char *argv[])
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("CUDA Exec time: %f\n", execTime.count());
 
-
 	/* SEQ */
 	start = chrono::high_resolution_clock::now();
 
@@ -41,10 +41,10 @@ int main(int argc, char *argv[])
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("SEQ Exec time: %f\n", execTime.count());
 
-	makeImage(dstMat, &dst);
+	//makeImage(dstMat, &dst);
 	makeImage(cuda_src, &cuda_image);
 	
-	imshow("Seq edges", dst);
+	//imshow("Seq edges", dst);
 
 	imshow("Cuda edges", cuda_image);
 
@@ -53,6 +53,7 @@ int main(int argc, char *argv[])
 	compression_params.push_back(9);
 	imwrite("img\\output\\output.png", dst, compression_params);*/
 	waitKey();
+	getchar();
 
 	printf("Done\n");
 

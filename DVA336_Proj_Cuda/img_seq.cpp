@@ -136,5 +136,7 @@ void seq_edge_detection(int16_t *src, Mat * image)
 	pixelPyth(src, gxMat, gyMat, width, height);
 
 	normalize(src, width, height);
+
+	printf("Seq max pixel: %d\n", (int)maxPixel);
 }
 
