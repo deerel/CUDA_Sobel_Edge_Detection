@@ -22,29 +22,35 @@ int main(int argc, char *argv[])
 
 	chrono::high_resolution_clock::time_point start, stop;
 	chrono::duration<float> execTime;
+	float speedup;
 
 	/* CUDA */
+	printf(".: CUDA :.\n");
 	start = chrono::high_resolution_clock::now();
 
 	cuda_edge_detection(cuda_src, &cuda_image);
 
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
-	printf("CUDA Exec time: %f\n", execTime.count());
+	printf("CUDA Exec time:       %f\n\n", execTime.count());
+	speedup = execTime.count();
 
 	/* SEQ */
+	printf(".: SEQ  :.\n");
 	start = chrono::high_resolution_clock::now();
 
 	seq_edge_detection(dstMat, &dst);
 
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
-	printf("SEQ Exec time: %f\n", execTime.count());
+	printf("SEQ  Exec time:       %f\n\n", execTime.count());
 
-	//makeImage(dstMat, &dst);
+	printf("CUDA to SEQ speed up  %f\n", execTime.count() / speedup);
+
+	makeImage(dstMat, &dst);
 	makeImage(cuda_src, &cuda_image);
 	
-	//imshow("Seq edges", dst);
+	imshow("Seq edges", dst);
 
 	imshow("Cuda edges", cuda_image);
 

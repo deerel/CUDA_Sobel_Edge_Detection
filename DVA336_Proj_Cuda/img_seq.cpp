@@ -1,8 +1,13 @@
+#include <chrono>
 #include "img_seq.h"
 #include "img_helper.h"
 
+#define SEQTIME 1
+
 int16_t maxPixel;
 int maxPos;
+
+using namespace std;
 
 void convertToGrayscale(pixel *src, int16_t *dst, const int len)
 {
@@ -110,8 +115,6 @@ void seq_edge_detection(int16_t *src, Mat * image)
 	int height = image->rows;
 	int size = width*height;
 
-	printf("Width: %d, Height: %d\n", width, height);
-
 	int16_t *srcMat = (int16_t *)calloc(size, sizeof(int16_t));
 	int16_t *dstMat = (int16_t *)calloc(size, sizeof(int16_t));
 	pixel *img = (pixel*)calloc(size, sizeof(pixel));
@@ -121,22 +124,70 @@ void seq_edge_detection(int16_t *src, Mat * image)
 	matrix *kernel = (matrix*)calloc(1, sizeof(matrix));
 
 	matToArray(image, img);
-
+#if SEQTIME > 0
+	chrono::high_resolution_clock::time_point start, stop;
+	chrono::duration<float> execTime;
+	start = chrono::high_resolution_clock::now();
+#endif
 	convertToGrayscale(img, srcMat, size);
+#if SEQTIME > 0
+	stop = chrono::high_resolution_clock::now();
+	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
+	printf("Grayscale time:       %f\n", execTime.count());
+#endif
 
+#if SEQTIME > 0
+	start = chrono::high_resolution_clock::now();
+#endif
 	getGaussianKernel(kernel);
 	pixelMatMul(srcMat, dstMat, kernel, width, height, true);
+#if SEQTIME > 0
+	stop = chrono::high_resolution_clock::now();
+	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
+	printf("Gaussian time:        %f\n", execTime.count());
+#endif
 
+#if SEQTIME > 0
+	start = chrono::high_resolution_clock::now();
+#endif
 	getGxKernel(kernel);
 	pixelMatMul(dstMat, gxMat, kernel, width, height, false);
+#if SEQTIME > 0
+	stop = chrono::high_resolution_clock::now();
+	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
+	printf("Gx time:              %f\n", execTime.count());
+#endif
 
+#if SEQTIME > 0
+	start = chrono::high_resolution_clock::now();
+#endif
 	getGyKernel(kernel);
 	pixelMatMul(dstMat, gyMat, kernel, width, height, false);
+#if SEQTIME > 0
+	stop = chrono::high_resolution_clock::now();
+	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
+	printf("Gy time:              %f\n", execTime.count());
+#endif
 
+#if SEQTIME > 0
+	start = chrono::high_resolution_clock::now();
+#endif
 	pixelPyth(src, gxMat, gyMat, width, height);
+#if SEQTIME > 0
+	stop = chrono::high_resolution_clock::now();
+	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
+	printf("Pyth time:            %f\n", execTime.count());
+#endif
 
+#if SEQTIME > 0
+	start = chrono::high_resolution_clock::now();
+#endif
 	normalize(src, width, height);
+#if SEQTIME > 0
+	stop = chrono::high_resolution_clock::now();
+	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
+	printf("Normalize time:       %f\n", execTime.count());
+#endif
 
-	printf("Seq max pixel: %d\n", (int)maxPixel);
 }
 

@@ -12,6 +12,8 @@ using namespace std;
 
 #define THREADS 256
 
+#define CUDATIME 1
+
 __global__ void kernel_grayscale(pixel * src, int16_t * dst, const int elements) {
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -177,9 +179,6 @@ __global__ void kernel_normalize(int16_t *src, const int elements, int *maxPixel
 	int stride = blockDim.x * gridDim.x;
 	const float factor = 255.0f / (float)*maxPixel;
 
-	if(index == 0)
-		printf("CUDA max pixel: %d\n", *maxPixel);
-
 	while (index < elements)
 	{
 		src[index] = src[index] * factor;
@@ -202,98 +201,137 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	const int height = image->rows;
 	const int elements = width * height;
 
-	chrono::high_resolution_clock::time_point start, stop;
-	chrono::duration<float> execTime;
-
 	h_src_image = (pixel *)malloc(elements * sizeof(pixel));
 	h_dst_image = (int16_t *)malloc(elements * sizeof(int16_t));
 
 	const int blocks = (elements / THREADS) + 1;
 
 	matToArray(image,h_src_image);
-	
+
+#if CUDATIME > 0
+	chrono::high_resolution_clock::time_point start, stop;
+	chrono::duration<float> execTime;
 	start = chrono::high_resolution_clock::now();
+#endif
 	cudaMalloc((void**)&d_src_image, elements * sizeof(pixel));
 	cudaMalloc((void**)&d_dst_image, elements * sizeof(int16_t));
 	cudaMalloc((void**)&d_result_image, elements * sizeof(int16_t));
 	cudaMalloc((void**)&d_sobelGx_image, elements * sizeof(int16_t));
 	//cudaMalloc((void**)&d_sobelGy_image, elements * sizeof(int16_t));
 	cudaMalloc((void**)&d_maxPixel, sizeof(int));
+#if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("Malloc time:          %f\n", execTime.count());
+#endif
 
 	/* Transfer image data*/
+#if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
+#endif
 	cudaMemcpy(d_src_image, h_src_image, elements * sizeof(pixel), cudaMemcpyHostToDevice);
+#if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("Transfer time:        %f\n", execTime.count());
+#endif
 
 	/* Make grayscale*/
+#if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
+#endif
 	kernel_grayscale <<<blocks, THREADS>>>(d_src_image, d_dst_image, elements);
 	cudaDeviceSynchronize();
+#if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("Grayscale time:       %f\n", execTime.count());
+#endif
 
 	/* Gaussian Blur */
+#if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
+#endif
 	getGaussianKernel(&matrix);
 	kernel_gaussian <<<blocks, THREADS>>>(d_dst_image, d_result_image, matrix, width, height);
 	cudaDeviceSynchronize();
+#if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("Gaussian time:        %f\n", execTime.count());
+#endif
 
 	/* Multiplication with Gx */
+#if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
+#endif
 	getGxKernel(&matrix);
 	kernel_sobel <<<blocks, THREADS>>>(d_result_image, d_sobelGx_image, matrix, width, height);
 	cudaDeviceSynchronize();
+#if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("Gx time:              %f\n", execTime.count());
+#endif
 
 	/* Multiplication with Gy */
+#if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
+#endif
 	getGyKernel(&matrix);
 	kernel_sobel <<<blocks, THREADS>>>(d_result_image, d_dst_image, matrix, width, height);
 	cudaDeviceSynchronize();
+#if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("Gy time:              %f\n", execTime.count());
+#endif
 
 	/* Pythagorean with Gx and Gy */
+#if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
+#endif
 	kernel_pythagorean <<<blocks, THREADS>>>(d_result_image, d_sobelGx_image, d_dst_image, elements);
 	cudaDeviceSynchronize();
+#if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("Pyth time:            %f\n", execTime.count());
+#endif
 
 	/* Map values to max 255, allocate 4*THREADS bytes shared memory */
+#if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
+#endif
 	kernel_findMaxPixel<<<blocks,THREADS,4*THREADS>>>(d_result_image, elements, d_maxPixel);
 	cudaDeviceSynchronize();
+#if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("Max pixel time:       %f\n", execTime.count());
+#endif
 
 	/* Map values to max 255, allocate 4*THREADS bytes shared memory */
+#if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
+#endif
 	kernel_normalize <<<blocks, THREADS>>>(d_result_image, elements, d_maxPixel);
 	cudaDeviceSynchronize();
+#if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("Normalize time:       %f\n", execTime.count());
+#endif
 
+#if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
+#endif
 	cudaMemcpy(src, d_result_image, elements * sizeof(int16_t), cudaMemcpyDeviceToHost);
+#if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("Transfer time:        %f\n", execTime.count());
+#endif
 
 	cudaError_t error = cudaGetLastError();
 	if (error != cudaSuccess)
