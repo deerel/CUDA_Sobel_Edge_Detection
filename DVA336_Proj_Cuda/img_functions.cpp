@@ -93,8 +93,10 @@ void pixelPyth(int16_t *dst, int16_t *gx, int16_t *gy, const int width, const in
 	{
 		pixelGx = gx[i] * gx[i];
 		pixelGy = gy[i] * gy[i];
-		mapVal = mapToRange(sqrt(pixelGx + pixelGy), 1024, 255);
+		
+		mapVal = mapToRange(sqrt(pixelGx + pixelGy), 1442, 255);
 		dst[i] = mapVal;
+		
 		if (mapVal > maxPixel) {
 			maxPixel = mapVal;
 			maxPos = i;
@@ -106,6 +108,7 @@ void normalize(int16_t *src, const int width, const int height) {
 	{
 		src[i] = mapToRange(src[i], maxPixel, 255);
 	}
+	printf("Maxpixel %d \n", maxPixel);
 }
 
 

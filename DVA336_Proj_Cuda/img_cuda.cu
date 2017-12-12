@@ -77,13 +77,13 @@ __global__ void kernel_sobel(int16_t * src, int16_t * dst, matrix mat, const int
 					int pixel_index = index + rowOffset + elementOffset;
 
 					pixelAcc += mat.element[i][j] * src[pixel_index];
-
+					
 				}
 			}
 		}
 		else {
 			//element is on the edge
-			pixelAcc = src[index] * 16;
+			pixelAcc = src[index];
 		}
 		dst[index] = pixelAcc;
 		index += stride;
@@ -100,6 +100,7 @@ __global__ void kernel_pythagorean(int16_t *dst, int16_t *gx, int16_t *gy, const
 	
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
 	int stride = blockDim.x * gridDim.x;
+	const float compressionFactor = 255.0f / 1445.0f;
 
 	int pixelGx, pixelGy;
 	while (index < (width*height))
@@ -107,7 +108,7 @@ __global__ void kernel_pythagorean(int16_t *dst, int16_t *gx, int16_t *gy, const
 		pixelGx = gx[index] * gx[index];
 		pixelGy = gy[index] * gy[index];
 
-		//dst[index] = sqrt(pixelGx + pixelGy);
+		dst[index] = (int16_t)(sqrtf((float)pixelGx + (float)pixelGy) * compressionFactor); //Cast to float since CUDA sqrtf overload is float/double
 
 		index += stride;
 	}
@@ -120,6 +121,8 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	pixel * d_src_image;
 	int16_t * d_dst_image;
 	int16_t * d_result_image;
+	int16_t * d_sobelGx_image;
+	int16_t * d_sobelGy_image;
 
 	const int width = image->cols;
 	const int height = image->rows;
@@ -135,6 +138,8 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	cudaMalloc((void**)&d_src_image, elements * sizeof(pixel));
 	cudaMalloc((void**)&d_dst_image, ext_elements * sizeof(int16_t));
 	cudaMalloc((void**)&d_result_image, ext_elements * sizeof(int16_t));
+	cudaMalloc((void**)&d_sobelGx_image, ext_elements * sizeof(int16_t));
+	cudaMalloc((void**)&d_sobelGy_image, ext_elements * sizeof(int16_t));
 
 	/* Make grayskale*/
 	cudaMemcpy(d_src_image, h_src_image, elements * sizeof(pixel), cudaMemcpyHostToDevice);
@@ -148,16 +153,20 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 
 	/* Multiplication with Gx */
 	getGxKernel(&matrix);
-	kernel_gaussian <<<BLOCKS, THREADS>>>(d_result_image, d_dst_image, matrix, width, height);
+	kernel_sobel <<<BLOCKS, THREADS>>>(d_result_image, d_sobelGx_image, matrix, width, height);
 	cudaDeviceSynchronize();
 
 	/* Multiplication with Gy */
 	getGyKernel(&matrix);
-	kernel_gaussian <<<BLOCKS, THREADS>>>(d_dst_image, d_result_image, matrix, width, height);
+	kernel_sobel <<<BLOCKS, THREADS>>>(d_result_image, d_sobelGy_image, matrix, width, height);
+	cudaDeviceSynchronize();
+
+	/* Pythagorean with Gx and Gy */
+	kernel_pythagorean <<<BLOCKS, THREADS>>>(d_result_image, d_sobelGx_image, d_sobelGy_image, width, height);
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(src, d_result_image, elements * sizeof(int16_t), cudaMemcpyDeviceToHost);
-	//cudaMemcpy(src, d_dst_image, elements * sizeof(int16_t), cudaMemcpyDeviceToHost);
+	//cudaMemcpy(src, d_sobelGx_image, elements * sizeof(int16_t), cudaMemcpyDeviceToHost);
 
 	cudaError_t error = cudaGetLastError();
 	if (error != cudaSuccess)

@@ -48,13 +48,13 @@ int main(int argc, char *argv[])
 
 	normalize(dstMat, src.cols, src.rows);
 
-	//makeImage(dstMat, &dst);
+	makeImage(dstMat, &dst);
 	makeImage(cuda_src, &cuda_image);
 	
 	//imshow("Original", src);
-	//imshow("Grayscale", dst);
+	imshow("Seq edges", dst);
 
-	imshow("Grayscale", cuda_image);
+	imshow("Cuda edges", cuda_image);
 
 	vector<int> compression_params;
 	compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
