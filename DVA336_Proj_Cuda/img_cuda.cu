@@ -142,11 +142,10 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	pixel * h_src_image;
 	int16_t * h_dst_image;
 	matrix matrix;
-	pixel * d_src_image;
-	int16_t * d_dst_image;
-	int16_t * d_result_image;
-	int16_t * d_sobelGx_image;
-	int16_t * d_sobelGy_image;
+	pixel * d_pixel_array;
+	int16_t * d_int16_array_1;
+	int16_t * d_int16_array_2;
+	int16_t * d_int16_array_3;
 	int * d_maxPixel;
 
 	const int width = image->cols;
@@ -165,10 +164,10 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	chrono::duration<float> execTime;
 	start = chrono::high_resolution_clock::now();
 #endif
-	cudaMalloc((void**)&d_src_image, elements * sizeof(pixel));
-	cudaMalloc((void**)&d_dst_image, elements * sizeof(int16_t));
-	cudaMalloc((void**)&d_result_image, elements * sizeof(int16_t));
-	cudaMalloc((void**)&d_sobelGx_image, elements * sizeof(int16_t));
+	cudaMalloc((void**)&d_pixel_array, elements * sizeof(pixel));
+	cudaMalloc((void**)&d_int16_array_1, elements * sizeof(int16_t));
+	cudaMalloc((void**)&d_int16_array_2, elements * sizeof(int16_t));
+	cudaMalloc((void**)&d_int16_array_3, elements * sizeof(int16_t));
 	cudaMalloc((void**)&d_maxPixel, sizeof(int));
 #if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
@@ -180,7 +179,7 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 #if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	cudaMemcpy(d_src_image, h_src_image, elements * sizeof(pixel), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_pixel_array, h_src_image, elements * sizeof(pixel), cudaMemcpyHostToDevice);
 #if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
@@ -191,7 +190,7 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 #if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	kernel_grayscale <<<blocks, THREADS>>>(d_src_image, d_dst_image, elements);
+	kernel_grayscale <<<blocks, THREADS>>>(d_pixel_array, d_int16_array_1, elements);
 	cudaDeviceSynchronize();
 #if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
@@ -204,7 +203,7 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	start = chrono::high_resolution_clock::now();
 #endif
 	getGaussianKernel(&matrix);
-	kernel_gaussian <<<blocks, THREADS>>>(d_dst_image, d_result_image, matrix, width, height);
+	kernel_gaussian <<<blocks, THREADS>>>(d_int16_array_1, d_int16_array_2, matrix, width, height);
 	cudaDeviceSynchronize();
 #if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
@@ -217,7 +216,7 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	start = chrono::high_resolution_clock::now();
 #endif
 	getGxKernel(&matrix);
-	kernel_sobel <<<blocks, THREADS>>>(d_result_image, d_sobelGx_image, matrix, width, height);
+	kernel_sobel <<<blocks, THREADS>>>(d_int16_array_2, d_int16_array_3, matrix, width, height);
 	cudaDeviceSynchronize();
 #if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
@@ -230,7 +229,7 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	start = chrono::high_resolution_clock::now();
 #endif
 	getGyKernel(&matrix);
-	kernel_sobel <<<blocks, THREADS>>>(d_result_image, d_dst_image, matrix, width, height);
+	kernel_sobel <<<blocks, THREADS>>>(d_int16_array_2, d_int16_array_1, matrix, width, height);
 	cudaDeviceSynchronize();
 #if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
@@ -242,7 +241,7 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 #if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	kernel_pythagorean <<<blocks, THREADS>>>(d_result_image, d_sobelGx_image, d_dst_image, elements);
+	kernel_pythagorean <<<blocks, THREADS>>>(d_int16_array_2, d_int16_array_3, d_int16_array_1, elements);
 	cudaDeviceSynchronize();
 #if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
@@ -254,7 +253,7 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 #if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	kernel_findMaxPixel<<<blocks,THREADS,4*THREADS>>>(d_result_image, elements, d_maxPixel);
+	kernel_findMaxPixel<<<blocks,THREADS,4*THREADS>>>(d_int16_array_2, elements, d_maxPixel);
 	cudaDeviceSynchronize();
 #if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
@@ -266,7 +265,7 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 #if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	kernel_normalize <<<blocks, THREADS>>>(d_result_image, elements, d_maxPixel);
+	kernel_normalize <<<blocks, THREADS>>>(d_int16_array_2, elements, d_maxPixel);
 	cudaDeviceSynchronize();
 #if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
@@ -277,7 +276,7 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 #if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	cudaMemcpy(src, d_result_image, elements * sizeof(int16_t), cudaMemcpyDeviceToHost);
+	cudaMemcpy(src, d_int16_array_2, elements * sizeof(int16_t), cudaMemcpyDeviceToHost);
 #if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
@@ -290,8 +289,8 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 		fprintf(stderr, "ERROR: %s\n", cudaGetErrorString(error));
 	}
 
-	cudaFree(d_src_image);
-	cudaFree(d_dst_image);
+	cudaFree(d_pixel_array);
+	cudaFree(d_int16_array_1);
 	free(h_src_image);
 	free(h_dst_image);
 

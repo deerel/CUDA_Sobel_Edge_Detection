@@ -20,3 +20,15 @@ void matToArray(Mat * src, pixel * dst)
 		}
 	}
 }
+
+void compareImages(int16_t * a, int16_t * b, const int elements) {
+	int diff = 0;
+
+	for (int i = 0; i < elements; i++) {
+		if (a[i] != b[i])
+			diff++;
+	}
+
+	printf("Number of differing pixels: %d", diff);
+
+}
