@@ -77,53 +77,12 @@ __global__ void kernel_sobel(int16_t * src, int16_t * dst, matrix mat, const int
 				}
 			}
 		}
-		else {
-			//element is on the edge
-			pixelAcc = src[index];
-		}
+
 		dst[index] = pixelAcc;
 
-		pixelAcc = 0;
 	}
 }
 
-__global__ void kernel_combo_sobel(int16_t * src, int16_t * gx, int16_t * gy, matrix matx, matrix maty, const int width, const int height) {
-	int index = threadIdx.x + blockIdx.x * blockDim.x;
-	int pixelValue;
-	int pixelAccX = 0;
-	int pixelAccY = 0;
-	const int noElements = width * height;
-	int16_t pixel;
-
-	if (index < noElements) {
-		/* The if statement make sure that only pixels with eight neigbours are being affected */
-		/*  NOT TOP ROW       && NOT BOTTOM ROW               && NOT FIRST COLUMN && NOT LAST COLUMN        */
-		if (index > width - 1 && index < width*(height - 1) - 1 && index%width != 0 && index%width != width - 1) {
-			for (int i = 0; i < 3; i++)
-			{
-				for (int j = 0; j < 3; j++)
-				{
-					int rowOffset = (i - 1)*width;
-					int elementOffset = (j - 1);
-					int pixel_index = index + rowOffset + elementOffset;
-					pixel = src[pixel_index];
-					pixelAccX += matx.element[i][j] * pixel;
-					pixelAccY += maty.element[i][j] * pixel;
-
-				}
-			}
-		}
-		else {
-			//element is on the edge
-			pixel = src[index];
-			pixelAccX = pixel;
-			pixelAccY = pixel;
-		}
-		gx[index] = pixelAccX;
-		gy[index] = pixelAccY;
-
-	}
-}
 
 /* Pixel pyth */
 __global__ void kernel_pythagorean(int16_t *dst, int16_t *gx, int16_t *gy, const int elements) {

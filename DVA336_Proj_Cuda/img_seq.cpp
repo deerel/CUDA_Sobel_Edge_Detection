@@ -76,7 +76,6 @@ void sobel(int16_t * src, int16_t *dst, matrix *mat, const int width, const int 
 {
 	int arrayLen = width * height;
 	int element, rowOffset, elementOffset, index, elementMod;
-
 	for (int r = 0; r < height; r++)
 	{
 		for (int c = 0; c < width; c++)
@@ -100,10 +99,6 @@ void sobel(int16_t * src, int16_t *dst, matrix *mat, const int width, const int 
 
 					}
 				}
-			}
-			else {
-				//element is on the edge
-				pixelAcc = src[element];
 			}
 
 			dst[c + r * width] = pixelAcc;
@@ -132,6 +127,8 @@ void pixelPyth(int16_t *dst, int16_t *gx, int16_t *gy, const int width, const in
 		}
 	}
 }
+
+
 void normalize(int16_t *src, const int width, const int height) {
 
 	const int elements = width * height;
@@ -139,7 +136,7 @@ void normalize(int16_t *src, const int width, const int height) {
 
 	for (int i = 0; i <elements; i++)
 	{
-		src[i] = src[i] * factor;
+		src[i] = src[i] * factor;	
 	}
 }
 

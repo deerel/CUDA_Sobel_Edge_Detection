@@ -12,7 +12,7 @@ using namespace std;
 int main(int argc, char *argv[])
 {
 	init_cuda();
-	Mat src = imread("img\\input\\dresden_S.jpg", CV_LOAD_IMAGE_COLOR);
+	Mat src = imread("img\\input\\dresden_XL.jpg", CV_LOAD_IMAGE_COLOR);
 	
 	Mat dst = src.clone();
 	int16_t *dstMat = (int16_t *)calloc(src.cols * src.rows, sizeof(int16_t));
@@ -26,8 +26,6 @@ int main(int argc, char *argv[])
 
 	float speedup;
 	float cudatime, seqtime;
-
-
 	
 	/* CUDA */
 	printf(".: CUDA :.\n");
@@ -56,17 +54,18 @@ int main(int argc, char *argv[])
 
 
 
+
     makeImage(dstMat, &dst);
-	makeImage(cuda_src, &cuda_image);
-	
+	//makeImage(cuda_src, &cuda_image);
+	//
 	imshow("Seq edges", dst);
 
-	imshow("Cuda edges", cuda_image);
+	//imshow("Cuda edges", cuda_image);
 
 	vector<int> compression_params;
 	compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
 	compression_params.push_back(9);
-	imwrite("img\\output\\output.png", cuda_image, compression_params);
+	imwrite("img\\output\\output.png", dst, compression_params);
 	waitKey();
 	getchar();
 
