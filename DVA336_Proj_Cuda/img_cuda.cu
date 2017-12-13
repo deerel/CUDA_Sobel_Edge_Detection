@@ -15,6 +15,7 @@ using namespace std;
 /* Set CUDATIME to 1 to print duration for each kernel */
 #define CUDATIME 0
 
+/* Convert RGB pixel values of src to greyscale values and store in dst */
 __global__ void kernel_grayscale(pixel * src, int16_t * dst, const int elements) {
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -22,6 +23,7 @@ __global__ void kernel_grayscale(pixel * src, int16_t * dst, const int elements)
 		dst[index] = (int16_t)(src[index].b + src[index].r + src[index].g) / 3;
 }
 
+/* Apply gaussian filter (mat) to pixel values in src and store in dst */
 __global__ void kernel_gaussian(int16_t * src, int16_t * dst, matrix mat, const int width, const int height) {
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
 	int pixelValue;
@@ -46,7 +48,7 @@ __global__ void kernel_gaussian(int16_t * src, int16_t * dst, matrix mat, const 
 			}
 		}
 		else {
-			//element is on the edge
+			/* element is on the edge */
 			pixelAcc = src[index] * 16;
 		}
 		dst[index] = pixelAcc/16;
@@ -55,6 +57,8 @@ __global__ void kernel_gaussian(int16_t * src, int16_t * dst, matrix mat, const 
 
 }
 
+/* Calculate approximation of horizontal or vertical deratives in src using sobel matrix stored in mat and
+   save result in dst */
 __global__ void kernel_sobel(int16_t * src, int16_t * dst, matrix mat, const int width, const int height) {
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
 	int pixelValue;
@@ -85,7 +89,8 @@ __global__ void kernel_sobel(int16_t * src, int16_t * dst, matrix mat, const int
 }
 
 
-/* Pixel pyth */
+/* Combine gradient approximations of gx and gy using pythagoreans theorem to get gradient magitude 
+   and store the result in dst */
 __global__ void kernel_pythagorean(int16_t *dst, int16_t *gx, int16_t *gy, const int elements) {
 	
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
@@ -101,6 +106,7 @@ __global__ void kernel_pythagorean(int16_t *dst, int16_t *gx, int16_t *gy, const
 	}
 }
 
+/* Find the max pixel value in src */
 __global__ void kernel_findMaxPixel(int16_t *src, const int elements, int *maxPixel) {
 	extern __shared__ int shared[];
 
@@ -126,6 +132,7 @@ __global__ void kernel_findMaxPixel(int16_t *src, const int elements, int *maxPi
 
 }
 
+/* Normalize pixel values in src to give a resulting image with clearer edges */
 __global__ void kernel_normalize(int16_t *src, const int elements, int *maxPixel)
 {
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
@@ -238,7 +245,6 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	printf("Gy time:              %f\n", execTime.count());
 #endif
 
-	/* Pythagorean with Gx and Gy */
 #if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
@@ -249,11 +255,11 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("Pyth time:            %f\n", execTime.count());
 #endif
-
-	/* Map values to max 255, allocate 4*THREADS bytes shared memory */
+	
 #if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
+	/* Allocate 4*THREADS bytes shared memory */
 	kernel_findMaxPixel<<<blocks,THREADS,4*THREADS>>>(d_int16_array_2, elements, d_maxPixel);
 	cudaDeviceSynchronize();
 #if CUDATIME > 0
@@ -262,7 +268,6 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	printf("Max pixel time:       %f\n", execTime.count());
 #endif
 
-	/* Map values to max 255, allocate 4*THREADS bytes shared memory */
 #if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
