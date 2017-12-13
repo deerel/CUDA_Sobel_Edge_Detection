@@ -12,7 +12,7 @@ using namespace std;
 int main(int argc, char *argv[])
 {
 	init_cuda();
-	Mat src = imread("img\\input\\clock_S.jpg", CV_LOAD_IMAGE_COLOR);
+	Mat src = imread("img\\input\\dresden_S.jpg", CV_LOAD_IMAGE_COLOR);
 	const int elements = src.cols * src.rows;
 	Mat seq_image = src.clone();
 	int16_t *seq_src = (int16_t *)calloc(elements, sizeof(int16_t));
@@ -70,8 +70,8 @@ int main(int argc, char *argv[])
 	waitKey();
 	getchar();
 
-	printf("Done\n");
-
 	free(seq_src);
 	free(cuda_src);
+
+	return 0;
 }

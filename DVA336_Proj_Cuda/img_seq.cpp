@@ -146,21 +146,21 @@ void seq_edge_detection(int16_t *src, Mat * image)
 	int height = image->rows;
 	int size = width*height;
 
-	int16_t *srcMat = (int16_t *)calloc(size, sizeof(int16_t));
-	int16_t *dstMat = (int16_t *)calloc(size, sizeof(int16_t));
-	pixel *img = (pixel*)calloc(size, sizeof(pixel));
+	int16_t *int16_array_1 = (int16_t *)calloc(size, sizeof(int16_t));
+	int16_t *int16_array_2 = (int16_t *)calloc(size, sizeof(int16_t));
+	pixel *pixel_array = (pixel*)calloc(size, sizeof(pixel));
 
 	int16_t *gxMat = (int16_t *)calloc(size, sizeof(int16_t));
 	int16_t *gyMat = (int16_t *)calloc(size, sizeof(int16_t));
 	matrix *kernel = (matrix*)calloc(1, sizeof(matrix));
 
-	matToArray(image, img);
+	matToArray(image, pixel_array);
 #if SEQTIME > 0
 	chrono::high_resolution_clock::time_point start, stop;
 	chrono::duration<float> execTime;
 	start = chrono::high_resolution_clock::now();
 #endif
-	convertToGrayscale(img, srcMat, size);
+	convertToGrayscale(pixel_array, int16_array_1, size);
 #if SEQTIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
@@ -171,7 +171,7 @@ void seq_edge_detection(int16_t *src, Mat * image)
 	start = chrono::high_resolution_clock::now();
 #endif
 	getGaussianKernel(kernel);
-	gaussianBlur(srcMat, dstMat, kernel, width, height);
+	gaussianBlur(int16_array_1, int16_array_2, kernel, width, height);
 #if SEQTIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
@@ -182,7 +182,7 @@ void seq_edge_detection(int16_t *src, Mat * image)
 	start = chrono::high_resolution_clock::now();
 #endif
 	getGxKernel(kernel);
-	sobel(dstMat, gxMat, kernel, width, height);
+	sobel(int16_array_2, gxMat, kernel, width, height);
 #if SEQTIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
@@ -193,7 +193,7 @@ void seq_edge_detection(int16_t *src, Mat * image)
 	start = chrono::high_resolution_clock::now();
 #endif
 	getGyKernel(kernel);
-	sobel(dstMat, gyMat, kernel, width, height);
+	sobel(int16_array_2, gyMat, kernel, width, height);
 #if SEQTIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
@@ -219,6 +219,13 @@ void seq_edge_detection(int16_t *src, Mat * image)
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("Normalize time:       %f\n", execTime.count());
 #endif
+
+	free(int16_array_1);
+	free(int16_array_2);
+	free(pixel_array);
+	free(gxMat);
+	free(gyMat);
+	free(kernel);
 
 }
 

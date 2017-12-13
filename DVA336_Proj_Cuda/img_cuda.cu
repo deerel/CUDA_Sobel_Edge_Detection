@@ -12,6 +12,7 @@ using namespace std;
 
 #define THREADS 256
 
+/* Set CUDATIME to 1 to print duration for each kernel */
 #define CUDATIME 0
 
 __global__ void kernel_grayscale(pixel * src, int16_t * dst, const int elements) {
@@ -291,6 +292,9 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 
 	cudaFree(d_pixel_array);
 	cudaFree(d_int16_array_1);
+	cudaFree(d_int16_array_2);
+	cudaFree(d_int16_array_3);
+	cudaFree(d_maxPixel);
 	free(h_src_image);
 	free(h_dst_image);
 
