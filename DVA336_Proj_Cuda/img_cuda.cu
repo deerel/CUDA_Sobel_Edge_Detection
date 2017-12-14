@@ -13,7 +13,7 @@ using namespace std;
 #define THREADS 256
 
 /* Set CUDATIME to 1 to print duration for each kernel */
-#define CUDATIME 1
+#define CUDATIME 0
 
 /* Convert RGB pixel values of src to greyscale values and store in dst */
 __global__ void kernel_grayscale(pixel * src, int16_t * dst, const int elements) {

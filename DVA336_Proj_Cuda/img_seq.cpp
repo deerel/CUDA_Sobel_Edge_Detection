@@ -2,7 +2,7 @@
 #include "img_seq.h"
 #include "img_helper.h"
 
-#define SEQTIME 1
+#define SEQTIME 0
 
 int16_t maxPixel;
 int maxPos;
@@ -338,4 +338,6 @@ void seq_edge_detection(int16_t *src, pixel * pixel_array, const int width, cons
 #endif
 
 }
+
+
 

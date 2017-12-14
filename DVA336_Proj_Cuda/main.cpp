@@ -33,47 +33,50 @@ int main(int argc, char *argv[])
 	float cudatime, seqtime;
 	
 
-		/* CUDA */
-		printf(".: CUDA :.\n");
-		start = chrono::high_resolution_clock::now();
+	/* CUDA */
+	printf(".: CUDA :.\n");
+	start = chrono::high_resolution_clock::now();
 
-		cuda_edge_detection(cuda_src, pixel_array, width, height);
+	cuda_edge_detection(cuda_src, pixel_array, width, height);
 
-		stop = chrono::high_resolution_clock::now();
-		execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
-		printf("CUDA Exec time:       %f\n\n", execTime.count());
-		speedup = execTime.count();
-		cudatime = execTime.count();
+	stop = chrono::high_resolution_clock::now();
+	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
+	printf("CUDA Exec time:       %f\n\n", execTime.count());
+	speedup = execTime.count();
+	cudatime = execTime.count();
 
-		/* SEQ */
-		printf(".: SEQ  :.\n");
-		start = chrono::high_resolution_clock::now();
+	/* SEQ */
+	printf(".: SEQ  :.\n");
+	start = chrono::high_resolution_clock::now();
 
-		seq_edge_detection(seq_src, pixel_array, width, height);
+	seq_edge_detection(seq_src, pixel_array, width, height);
 
-		stop = chrono::high_resolution_clock::now();
-		execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
-		printf("SEQ  Exec time:       %f\n\n", execTime.count());
-		seqtime = execTime.count();
+	stop = chrono::high_resolution_clock::now();
+	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
+	printf("SEQ  Exec time:       %f\n\n", execTime.count());
+	seqtime = execTime.count();
 
-		printf("CUDA to SEQ speed up  %f\n", execTime.count() / speedup);
+	printf("CUDA to SEQ speed up  %f\n", execTime.count() / speedup);
 
-		compareImages(cuda_src, seq_src, elements);
+	compareImages(cuda_src, seq_src, elements);
 
 
 
-    //makeImage(seq_src, &seq_image);
-	//makeImage(cuda_src, &cuda_image);
+    makeImage(seq_src, &seq_image);
+	makeImage(cuda_src, &cuda_image);
 	
-	//imshow("Seq edges", seq_image);
+	imshow("Seq edges", seq_image);
 
-	//imshow("Cuda edges", cuda_image);
+	imshow("Cuda edges", cuda_image);
 
+
+	/* To output the image to disc */
 	//vector<int> compression_params;
 	//compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
 	//compression_params.push_back(9);
 	//imwrite("img\\output\\output.png", seq_image, compression_params);
-	//waitKey();
+	
+	waitKey();
 	getchar();
 
 	free(seq_src);
