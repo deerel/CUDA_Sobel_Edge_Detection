@@ -2,7 +2,7 @@
 #include "img_seq.h"
 #include "img_helper.h"
 
-#define SEQTIME 0
+#define SEQTIME 1
 
 int16_t maxPixel;
 int maxPos;
@@ -323,11 +323,19 @@ void seq_edge_detection(int16_t *src, pixel * pixel_array, const int width, cons
 	printf("Normalize time:       %f\n", execTime.count());
 #endif
 
+#if SEQTIME > 0
+	start = chrono::high_resolution_clock::now();
+#endif
 	free(int16_array_1);
 	free(int16_array_2);
 	free(gxMat);
 	free(gyMat);
 	free(kernel);
+#if SEQTIME > 0
+	stop = chrono::high_resolution_clock::now();
+	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
+	printf("Free time:            %f\n", execTime.count());
+#endif
 
 }
 

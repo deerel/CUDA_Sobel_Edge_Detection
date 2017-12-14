@@ -12,7 +12,7 @@ using namespace std;
 int main(int argc, char *argv[])
 {
 	init_cuda();
-	Mat src = imread("img\\input\\dresden_S.jpg", CV_LOAD_IMAGE_COLOR);
+	Mat src = imread("img\\input\\dresden_XL.jpg", CV_LOAD_IMAGE_COLOR);
 	const int width = src.cols;
 	const int height = src.rows;
 	const int elements = width * height;
@@ -32,36 +32,34 @@ int main(int argc, char *argv[])
 	float speedup;
 	float cudatime, seqtime;
 	
-	for (int i = 0; i < 5; i++) {
+
 		/* CUDA */
-		//printf(".: CUDA :.\n");
+		printf(".: CUDA :.\n");
 		start = chrono::high_resolution_clock::now();
 
 		cuda_edge_detection(cuda_src, pixel_array, width, height);
 
 		stop = chrono::high_resolution_clock::now();
 		execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
-		//printf("CUDA Exec time:       %f\n\n", execTime.count());
+		printf("CUDA Exec time:       %f\n\n", execTime.count());
 		speedup = execTime.count();
 		cudatime = execTime.count();
 
 		/* SEQ */
-		//printf(".: SEQ  :.\n");
+		printf(".: SEQ  :.\n");
 		start = chrono::high_resolution_clock::now();
 
 		seq_edge_detection(seq_src, pixel_array, width, height);
 
 		stop = chrono::high_resolution_clock::now();
 		execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
-		//printf("SEQ  Exec time:       %f\n\n", execTime.count());
+		printf("SEQ  Exec time:       %f\n\n", execTime.count());
 		seqtime = execTime.count();
 
-		//printf("CUDA to SEQ speed up  %f\n", execTime.count() / speedup);
+		printf("CUDA to SEQ speed up  %f\n", execTime.count() / speedup);
 
-		//compareImages(cuda_src, seq_src, elements);
-		printf("%f %f\n", cudatime, seqtime);
+		compareImages(cuda_src, seq_src, elements);
 
-	}
 
 
     //makeImage(seq_src, &seq_image);

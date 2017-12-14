@@ -13,7 +13,7 @@ using namespace std;
 #define THREADS 256
 
 /* Set CUDATIME to 1 to print duration for each kernel */
-#define CUDATIME 0
+#define CUDATIME 1
 
 /* Convert RGB pixel values of src to greyscale values and store in dst */
 __global__ void kernel_grayscale(pixel * src, int16_t * dst, const int elements) {
@@ -290,14 +290,21 @@ void cuda_edge_detection(int16_t * src, pixel * pixel_array, const int width, co
 		fprintf(stderr, "ERROR: %s\n", cudaGetErrorString(error));
 	}
 
-	cudaDeviceSynchronize();
-	
+
+#if CUDATIME > 0
+	start = chrono::high_resolution_clock::now();
+#endif
 	cudaFree(d_pixel_array);
 	cudaFree(d_int16_array_1);
 	cudaFree(d_int16_array_2);
 	cudaFree(d_int16_array_3);
 	cudaFree(d_maxPixel);
 	free(h_dst_image);
+#if CUDATIME > 0
+	stop = chrono::high_resolution_clock::now();
+	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
+	printf("Free time:            %f\n", execTime.count());
+#endif
 
 }
 
