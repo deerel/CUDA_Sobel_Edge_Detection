@@ -24,8 +24,7 @@ __global__ void kernel_grayscale(pixel * src, int16_t * dst, const int elements)
 
 __global__ void kernel_gaussian(int16_t * src, int16_t * dst, matrix mat, const int width, const int height) {
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
-	int pixelValue;
-	int pixelAcc = 0;
+	float pixelAcc = 0;
 	const int noElements = width * height;
 
 	if (index < noElements) {
@@ -44,13 +43,12 @@ __global__ void kernel_gaussian(int16_t * src, int16_t * dst, matrix mat, const 
 
 				}
 			}
+			dst[index] = pixelAcc / 16;
 		}
 		else {
 			//element is on the edge
-			pixelAcc = src[index] * 16;
+			dst[index] = src[index];
 		}
-		dst[index] = pixelAcc/16;
-		pixelAcc = 0;
 	}
 
 }
@@ -86,7 +84,7 @@ __global__ void kernel_sobel(int16_t * src, int16_t * dst, matrix mat, const int
 
 
 /* Pixel pyth */
-__global__ void kernel_pythagorean(int16_t *dst, int16_t *gx, int16_t *gy, const int elements) {
+__global__ void kernel_pythagorean(int16_t *dst, int16_t *gx, int16_t *gy, const int elements, int *maxPixel) {
 	
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
 	const float compressionFactor = 255.0f / 1445.0f;
@@ -96,35 +94,37 @@ __global__ void kernel_pythagorean(int16_t *dst, int16_t *gx, int16_t *gy, const
 	{
 		pixelGx = gx[index] * gx[index];
 		pixelGy = gy[index] * gy[index];
+		int16_t value = (int16_t)(sqrtf((float)pixelGx + (float)pixelGy) * compressionFactor);
+			dst[index] = value;//(int16_t)(sqrtf((float)pixelGx + (float)pixelGy) * compressionFactor); //Cast to float since CUDA sqrtf overload is float/double
 
-		dst[index] = (int16_t)(sqrtf((float)pixelGx + (float)pixelGy) * compressionFactor); //Cast to float since CUDA sqrtf overload is float/double
+		atomicMax(maxPixel, value);
 	}
 }
 
-__global__ void kernel_findMaxPixel(int16_t *src, const int elements, int *maxPixel) {
-	extern __shared__ int shared[];
-
-	int tid = threadIdx.x;
-	int gid = (blockDim.x * blockIdx.x) + tid;
-	shared[tid] = -1;
-
-	if (gid < elements)
-		shared[tid] = src[gid];
-	__syncthreads();
-
-	for (unsigned int s = blockDim.x / 2; s>0; s >>= 1)
-	{
-		if (tid < s && gid < elements)
-			shared[tid] = max(shared[tid], shared[tid + s]); 
-		__syncthreads();
-	}
-
-	if (tid == 0)
-	{
-		atomicMax(maxPixel, shared[0]);
-	}
-
-}
+//__global__ void kernel_findMaxPixel(int16_t *src, const int elements, int *maxPixel) {
+//	extern __shared__ int shared[];
+//
+//	int tid = threadIdx.x;
+//	int gid = (blockDim.x * blockIdx.x) + tid;
+//	shared[tid] = -1;
+//
+//	if (gid < elements)
+//		shared[tid] = src[gid];
+//	__syncthreads();
+//
+//	for (unsigned int s = blockDim.x / 2; s>0; s >>= 1)
+//	{
+//		if (tid < s && gid < elements)
+//			shared[tid] = max(shared[tid], shared[tid + s]); 
+//		__syncthreads();
+//	}
+//
+//	if (tid == 0)
+//	{
+//		atomicMax(maxPixel, shared[0]);
+//	}
+//
+//}
 
 __global__ void kernel_normalize(int16_t *src, const int elements, int *maxPixel)
 {
@@ -139,8 +139,7 @@ __global__ void kernel_normalize(int16_t *src, const int elements, int *maxPixel
 	}
 }
 
-void cuda_edge_detection(int16_t * src, Mat * image) {
-	pixel * h_src_image;
+void cuda_edge_detection(int16_t * src, pixel * pixel_array, const int width, const int height) {
 	int16_t * h_dst_image;
 	matrix matrix;
 	pixel * d_pixel_array;
@@ -149,22 +148,16 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	int16_t * d_int16_array_3;
 	int * d_maxPixel;
 
-	const int width = image->cols;
-	const int height = image->rows;
 	const int elements = width * height;
-
-	h_src_image = (pixel *)malloc(elements * sizeof(pixel));
-	h_dst_image = (int16_t *)malloc(elements * sizeof(int16_t));
-
 	const int blocks = (elements / THREADS) + 1;
 
-	matToArray(image,h_src_image);
 
 #if CUDATIME > 0
 	chrono::high_resolution_clock::time_point start, stop;
 	chrono::duration<float> execTime;
 	start = chrono::high_resolution_clock::now();
 #endif
+	h_dst_image = (int16_t *)malloc(elements * sizeof(int16_t));
 	cudaMalloc((void**)&d_pixel_array, elements * sizeof(pixel));
 	cudaMalloc((void**)&d_int16_array_1, elements * sizeof(int16_t));
 	cudaMalloc((void**)&d_int16_array_2, elements * sizeof(int16_t));
@@ -180,7 +173,7 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 #if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	cudaMemcpy(d_pixel_array, h_src_image, elements * sizeof(pixel), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_pixel_array, pixel_array, elements * sizeof(pixel), cudaMemcpyHostToDevice);
 #if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
@@ -242,7 +235,7 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 #if CUDATIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	kernel_pythagorean <<<blocks, THREADS>>>(d_int16_array_2, d_int16_array_3, d_int16_array_1, elements);
+	kernel_pythagorean <<<blocks, THREADS>>>(d_int16_array_2, d_int16_array_3, d_int16_array_1, elements, d_maxPixel);
 	cudaDeviceSynchronize();
 #if CUDATIME > 0
 	stop = chrono::high_resolution_clock::now();
@@ -250,17 +243,17 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 	printf("Pyth time:            %f\n", execTime.count());
 #endif
 
-	/* Map values to max 255, allocate 4*THREADS bytes shared memory */
-#if CUDATIME > 0
-	start = chrono::high_resolution_clock::now();
-#endif
-	kernel_findMaxPixel<<<blocks,THREADS,4*THREADS>>>(d_int16_array_2, elements, d_maxPixel);
-	cudaDeviceSynchronize();
-#if CUDATIME > 0
-	stop = chrono::high_resolution_clock::now();
-	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
-	printf("Max pixel time:       %f\n", execTime.count());
-#endif
+//	/* Map values to max 255, allocate 4*THREADS bytes shared memory */
+//#if CUDATIME > 0
+//	start = chrono::high_resolution_clock::now();
+//#endif
+//	kernel_findMaxPixel<<<blocks,THREADS,4*THREADS>>>(d_int16_array_2, elements, d_maxPixel);
+//	cudaDeviceSynchronize();
+//#if CUDATIME > 0
+//	stop = chrono::high_resolution_clock::now();
+//	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
+//	printf("Max pixel time:       %f\n", execTime.count());
+//#endif
 
 	/* Map values to max 255, allocate 4*THREADS bytes shared memory */
 #if CUDATIME > 0
@@ -290,12 +283,13 @@ void cuda_edge_detection(int16_t * src, Mat * image) {
 		fprintf(stderr, "ERROR: %s\n", cudaGetErrorString(error));
 	}
 
+	cudaDeviceSynchronize();
+	
 	cudaFree(d_pixel_array);
 	cudaFree(d_int16_array_1);
 	cudaFree(d_int16_array_2);
 	cudaFree(d_int16_array_3);
 	cudaFree(d_maxPixel);
-	free(h_src_image);
 	free(h_dst_image);
 
 }

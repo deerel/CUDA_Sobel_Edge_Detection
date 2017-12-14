@@ -32,10 +32,83 @@ void makeImage(int16_t *src, Mat *dst)
 }
 
 
-void gaussianBlur(int16_t * src, int16_t *dst, matrix *mat, const int width, const int height)
+//void gaussianBlur(int16_t * src, int16_t *dst, matrix *mat, const int width, const int height)
+//{
+//	int arrayLen = width * height;
+//	int element, rowOffset, elementOffset, index, elementMod;
+//
+//	for (int r = 0; r < height; r++)
+//	{
+//		for (int c = 0; c < width; c++)
+//		{
+//			int pixel = (int)src[c + r * width];
+//			int pixelAcc = 0;
+//			element = (c + r * width);
+//
+//			if (r > 0 && c > 0 && r < height - 1 && c < width - 1) {
+//				// element got all eight neighbours
+//				for (int i = 0; i < 3; i++)
+//				{
+//					rowOffset = (i - 1)*width;
+//					for (int j = 0; j < 3; j++)
+//					{
+//						elementOffset = (j - 1);
+//						index = element + rowOffset + elementOffset;
+//
+//						pixelAcc += mat->element[i][j] * src[index];
+//
+//					}
+//				}
+//			}
+//			else {
+//				//element is on the edge
+//				pixelAcc = src[element] * 16;
+//			}
+//
+//			pixelAcc /= 16;
+//			dst[c + r * width] = pixelAcc;
+//		}
+//	}
+//}
+//
+//void sobel(int16_t * src, int16_t *dst, matrix *mat, const int width, const int height)
+//{
+//	int arrayLen = width * height;
+//	int element, rowOffset, elementOffset, index, elementMod;
+//	for (int r = 0; r < height; r++)
+//	{
+//		for (int c = 0; c < width; c++)
+//		{
+//			int pixel = (int)src[c + r * width];
+//			int pixelAcc = 0;
+//			element = (c + r * width);
+//
+//			if (r > 0 && c > 0 && r < height - 1 && c < width - 1) {
+//				// element got all eight neighbours
+//				for (int i = 0; i < 3; i++)
+//				{
+//					rowOffset = (i - 1)*width;
+//					for (int j = 0; j < 3; j++)
+//					{
+//						elementOffset = (j - 1);
+//						index = element + rowOffset + elementOffset;
+//
+//						pixelAcc += mat->element[i][j] * src[index];
+//
+//					}
+//				}
+//			}
+//
+//			dst[c + r * width] = pixelAcc;
+//		}
+//	}
+//}
+
+void gaussianBlur(int16_t * src, int16_t * dst, const int width, const int height)
 {
-	int arrayLen = width * height;
-	int element, rowOffset, elementOffset, index, elementMod;
+	int element;
+	int i, j;
+	const int elements = width * height;
 
 	for (int r = 0; r < height; r++)
 	{
@@ -44,120 +117,150 @@ void gaussianBlur(int16_t * src, int16_t *dst, matrix *mat, const int width, con
 			int pixel = (int)src[c + r * width];
 			int pixelAcc = 0;
 			element = (c + r * width);
-			elementMod = element % width;
 
 			if (r > 0 && c > 0 && r < height - 1 && c < width - 1) {
-				// element got all eight neighbours
-				for (int i = 0; i < 3; i++)
-				{
-					rowOffset = (i - 1)*width;
-					for (int j = 0; j < 3; j++)
-					{
-						elementOffset = (j - 1);
-						index = element + rowOffset + elementOffset;
-
-						pixelAcc += mat->element[i][j] * src[index];
-
-					}
-				}
+				pixelAcc += src[element - width - 1];			// 1/16
+				pixelAcc += src[element - width] * 2;			// 2/16
+				pixelAcc += src[element - width + 1];			// 1/16
+				pixelAcc += src[element - 1] * 2;				// 2/16
+				pixelAcc += src[element] * 4;					// 4/16
+				pixelAcc += src[element + 1] * 2;				// 2/16
+				pixelAcc += src[element + width - 1];			// 1/16
+				pixelAcc += src[element + width] * 2;			// 2/16
+				pixelAcc += src[element + width + 1];			// 1/16
+				dst[element] = pixelAcc / 16;
 			}
 			else {
 				//element is on the edge
-				pixelAcc = src[element] * 16;
+				dst[element] = src[element];
 			}
-
-			pixelAcc /= 16;
-			dst[c + r * width] = pixelAcc;
 		}
 	}
+
 }
 
-void sobel(int16_t * src, int16_t *dst, matrix *mat, const int width, const int height)
+void sobel_gx(int16_t * src, int16_t *dst, const int width, const int height)
 {
-	int arrayLen = width * height;
-	int element, rowOffset, elementOffset, index, elementMod;
+	int element;
 	for (int r = 0; r < height; r++)
 	{
 		for (int c = 0; c < width; c++)
 		{
-			int pixel = (int)src[c + r * width];
 			int pixelAcc = 0;
 			element = (c + r * width);
-			elementMod = element % width;
 
 			if (r > 0 && c > 0 && r < height - 1 && c < width - 1) {
-				// element got all eight neighbours
-				for (int i = 0; i < 3; i++)
-				{
-					rowOffset = (i - 1)*width;
-					for (int j = 0; j < 3; j++)
-					{
-						elementOffset = (j - 1);
-						index = element + rowOffset + elementOffset;
-
-						pixelAcc += mat->element[i][j] * src[index];
-
-					}
-				}
+				pixelAcc += src[element - width - 1];
+				pixelAcc += src[element - width + 1] * -1;
+				pixelAcc += src[element - 1] * 2;
+				pixelAcc += src[element + 1] * -2;
+				pixelAcc += src[element + width - 1];
+				pixelAcc += src[element + width + 1] * -1;
 			}
-
 			dst[c + r * width] = pixelAcc;
 		}
 	}
 }
 
-void pixelPyth(int16_t *dst, int16_t *gx, int16_t *gy, const int width, const int height)
+
+void sobel_gy(int16_t * src, int16_t *dst, const int width, const int height)
 {
-	int pixelGx, pixelGy;
-	uint16_t mapVal;
-	maxPixel = 0;
-	const float compressFactor = 255.0f / 1445.0f;
-	
-	for (int i = 0; i < width*height; i++)
+	int element;
+	for (int r = 0; r < height; r++)
 	{
-		pixelGx = gx[i] * gx[i];
-		pixelGy = gy[i] * gy[i];
-		
-		mapVal = (int)(sqrtf((float)pixelGx + (float)pixelGy) * compressFactor);
-		dst[i] = mapVal;
-		
-		if (mapVal > maxPixel) {
-			maxPixel = mapVal;
-			maxPos = i;
+		for (int c = 0; c < width; c++)
+		{
+			int pixelAcc = 0;
+			element = (c + r * width);
+
+			if (r > 0 && c > 0 && r < height - 1 && c < width - 1) {
+				pixelAcc += src[element - width - 1];
+				pixelAcc += src[element - width] * 2;
+				pixelAcc += src[element - width + 1];
+				pixelAcc += src[element + width - 1] * -1;
+				pixelAcc += src[element + width] * -2;
+				pixelAcc += src[element + width + 1] * -1;
+			}
+			dst[c + r * width] = pixelAcc;
 		}
 	}
 }
 
+void pixelPyth(int16_t *dst, int16_t * gx, int16_t * gy, const int width, const int height)
+{
+	int pixelGx, pixelGy;
+	int pixelGx2, pixelGy2;
+	uint16_t mapVal;
+	uint16_t mapVal2;
+	uint16_t max;
+	int index;
+	maxPixel = 0;
+	const float compressFactor = 255.0f / 1445.0f;
+	const int elements = width * height;
+	
+	/* Since it is a 2D image we can unroll with 2 to gain performance */
+	for (int i = 0; i < elements; i+=2)
+	{
+		pixelGx = gx[i] * gx[i];
+		pixelGy = gy[i] * gy[i];
+		pixelGx2 = gx[i+1] * gx[i + 1];
+		pixelGy2 = gy[i + 1] * gy[i + 1];
+		
+		mapVal = (int)(sqrtf((float)pixelGx + (float)pixelGy) * compressFactor);
+		mapVal2 = (int)(sqrtf((float)pixelGx2 + (float)pixelGy2) * compressFactor);
+		dst[i] = mapVal;
+		dst[i+1] = mapVal2;
+
+		if (mapVal > mapVal2) {
+			max = mapVal;
+			index = i;
+		}
+		else {
+			max = mapVal2;
+			index = i+1;
+		}
+		if (max > maxPixel) {
+			maxPixel = max;
+			maxPos = index;
+		}
+	}
+}
 
 void normalize(int16_t *src, const int width, const int height) {
 
 	const int elements = width * height;
 	const float factor = 255.0f / (float)maxPixel;
 
-	for (int i = 0; i <elements; i++)
+	/* Since it is a 2D image we can unroll with 2 to gain performance */
+	for (int i = 0; i <elements; i+=2)
 	{
 		src[i] = src[i] * factor;	
+		src[i+1] = src[i+1] * factor;
 	}
 }
 
-void seq_edge_detection(int16_t *src, Mat * image)
+void seq_edge_detection(int16_t *src, pixel * pixel_array, const int width, const int height)
 {
-	int width = image->cols;
-	int height = image->rows;
-	int size = width*height;
+	const int size = width*height;
 
+#if SEQTIME > 0
+	chrono::high_resolution_clock::time_point start, stop;
+	chrono::duration<float> execTime;
+	start = chrono::high_resolution_clock::now();
+#endif
 	int16_t *int16_array_1 = (int16_t *)calloc(size, sizeof(int16_t));
 	int16_t *int16_array_2 = (int16_t *)calloc(size, sizeof(int16_t));
-	pixel *pixel_array = (pixel*)calloc(size, sizeof(pixel));
 
 	int16_t *gxMat = (int16_t *)calloc(size, sizeof(int16_t));
 	int16_t *gyMat = (int16_t *)calloc(size, sizeof(int16_t));
 	matrix *kernel = (matrix*)calloc(1, sizeof(matrix));
-
-	matToArray(image, pixel_array);
 #if SEQTIME > 0
-	chrono::high_resolution_clock::time_point start, stop;
-	chrono::duration<float> execTime;
+	stop = chrono::high_resolution_clock::now();
+	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
+	printf("Malloc time:          %f\n", execTime.count());
+#endif
+
+#if SEQTIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
 	convertToGrayscale(pixel_array, int16_array_1, size);
@@ -170,8 +273,8 @@ void seq_edge_detection(int16_t *src, Mat * image)
 #if SEQTIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	getGaussianKernel(kernel);
-	gaussianBlur(int16_array_1, int16_array_2, kernel, width, height);
+	//getGaussianKernel(kernel);
+	gaussianBlur(int16_array_1, int16_array_2, width, height);
 #if SEQTIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
@@ -181,8 +284,8 @@ void seq_edge_detection(int16_t *src, Mat * image)
 #if SEQTIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	getGxKernel(kernel);
-	sobel(int16_array_2, gxMat, kernel, width, height);
+	//getGxKernel(kernel);
+	sobel_gx(int16_array_2, gxMat, width, height);
 #if SEQTIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
@@ -192,8 +295,8 @@ void seq_edge_detection(int16_t *src, Mat * image)
 #if SEQTIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	getGyKernel(kernel);
-	sobel(int16_array_2, gyMat, kernel, width, height);
+	//getGyKernel(kernel);
+	sobel_gy(int16_array_2, gyMat, width, height);
 #if SEQTIME > 0
 	stop = chrono::high_resolution_clock::now();
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
@@ -222,7 +325,6 @@ void seq_edge_detection(int16_t *src, Mat * image)
 
 	free(int16_array_1);
 	free(int16_array_2);
-	free(pixel_array);
 	free(gxMat);
 	free(gyMat);
 	free(kernel);

@@ -4,6 +4,6 @@
 
 using namespace cv;
 
-void cuda_edge_detection(int16_t * src, Mat * image);
+void cuda_edge_detection(int16_t * src, pixel * pixel_array, const int width, const int height);
 
 void init_cuda();
