@@ -106,32 +106,6 @@ __global__ void kernel_pythagorean(int16_t *dst, int16_t *gx, int16_t *gy, const
 	}
 }
 
-/* Find the max pixel value in src */
-//__global__ void kernel_findMaxPixel(int16_t *src, const int elements, int *maxPixel) {
-//	extern __shared__ int shared[];
-//
-//	int tid = threadIdx.x;
-//	int gid = (blockDim.x * blockIdx.x) + tid;
-//	shared[tid] = -1;
-//
-//	if (gid < elements)
-//		shared[tid] = src[gid];
-//	__syncthreads();
-//
-//	for (unsigned int s = blockDim.x / 2; s>0; s >>= 1)
-//	{
-//		if (tid < s && gid < elements)
-//			shared[tid] = max(shared[tid], shared[tid + s]); 
-//		__syncthreads();
-//	}
-//
-//	if (tid == 0)
-//	{
-//		atomicMax(maxPixel, shared[0]);
-//	}
-//
-//}
-
 /* Normalize pixel values in src to give a resulting image with clearer edges */
 __global__ void kernel_normalize(int16_t *src, const int elements, int *maxPixel)
 {
@@ -249,18 +223,6 @@ void cuda_edge_detection(int16_t * src, pixel * pixel_array, const int width, co
 	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
 	printf("Pyth time:            %f\n", execTime.count());
 #endif
-
-//	/* Map values to max 255, allocate 4*THREADS bytes shared memory */
-//#if CUDATIME > 0
-//	start = chrono::high_resolution_clock::now();
-//#endif
-//	kernel_findMaxPixel<<<blocks,THREADS,4*THREADS>>>(d_int16_array_2, elements, d_maxPixel);
-//	cudaDeviceSynchronize();
-//#if CUDATIME > 0
-//	stop = chrono::high_resolution_clock::now();
-//	execTime = chrono::duration_cast<chrono::duration<float>>(stop - start);
-//	printf("Max pixel time:       %f\n", execTime.count());
-//#endif
 
 	/* Map values to max 255, allocate 4*THREADS bytes shared memory */
 #if CUDATIME > 0

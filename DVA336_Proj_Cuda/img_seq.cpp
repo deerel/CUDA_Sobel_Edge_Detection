@@ -31,79 +31,6 @@ void makeImage(int16_t *src, Mat *dst)
 
 }
 
-
-//void gaussianBlur(int16_t * src, int16_t *dst, matrix *mat, const int width, const int height)
-//{
-//	int arrayLen = width * height;
-//	int element, rowOffset, elementOffset, index, elementMod;
-//
-//	for (int r = 0; r < height; r++)
-//	{
-//		for (int c = 0; c < width; c++)
-//		{
-//			int pixel = (int)src[c + r * width];
-//			int pixelAcc = 0;
-//			element = (c + r * width);
-//
-//			if (r > 0 && c > 0 && r < height - 1 && c < width - 1) {
-//				// element got all eight neighbours
-//				for (int i = 0; i < 3; i++)
-//				{
-//					rowOffset = (i - 1)*width;
-//					for (int j = 0; j < 3; j++)
-//					{
-//						elementOffset = (j - 1);
-//						index = element + rowOffset + elementOffset;
-//
-//						pixelAcc += mat->element[i][j] * src[index];
-//
-//					}
-//				}
-//			}
-//			else {
-//				//element is on the edge
-//				pixelAcc = src[element] * 16;
-//			}
-//
-//			pixelAcc /= 16;
-//			dst[c + r * width] = pixelAcc;
-//		}
-//	}
-//}
-//
-//void sobel(int16_t * src, int16_t *dst, matrix *mat, const int width, const int height)
-//{
-//	int arrayLen = width * height;
-//	int element, rowOffset, elementOffset, index, elementMod;
-//	for (int r = 0; r < height; r++)
-//	{
-//		for (int c = 0; c < width; c++)
-//		{
-//			int pixel = (int)src[c + r * width];
-//			int pixelAcc = 0;
-//			element = (c + r * width);
-//
-//			if (r > 0 && c > 0 && r < height - 1 && c < width - 1) {
-//				// element got all eight neighbours
-//				for (int i = 0; i < 3; i++)
-//				{
-//					rowOffset = (i - 1)*width;
-//					for (int j = 0; j < 3; j++)
-//					{
-//						elementOffset = (j - 1);
-//						index = element + rowOffset + elementOffset;
-//
-//						pixelAcc += mat->element[i][j] * src[index];
-//
-//					}
-//				}
-//			}
-//
-//			dst[c + r * width] = pixelAcc;
-//		}
-//	}
-//}
-
 void gaussianBlur(int16_t * src, int16_t * dst, const int width, const int height)
 {
 	int element;
@@ -273,7 +200,6 @@ void seq_edge_detection(int16_t *src, pixel * pixel_array, const int width, cons
 #if SEQTIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	//getGaussianKernel(kernel);
 	gaussianBlur(int16_array_1, int16_array_2, width, height);
 #if SEQTIME > 0
 	stop = chrono::high_resolution_clock::now();
@@ -284,7 +210,6 @@ void seq_edge_detection(int16_t *src, pixel * pixel_array, const int width, cons
 #if SEQTIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	//getGxKernel(kernel);
 	sobel_gx(int16_array_2, gxMat, width, height);
 #if SEQTIME > 0
 	stop = chrono::high_resolution_clock::now();
@@ -295,7 +220,6 @@ void seq_edge_detection(int16_t *src, pixel * pixel_array, const int width, cons
 #if SEQTIME > 0
 	start = chrono::high_resolution_clock::now();
 #endif
-	//getGyKernel(kernel);
 	sobel_gy(int16_array_2, gyMat, width, height);
 #if SEQTIME > 0
 	stop = chrono::high_resolution_clock::now();

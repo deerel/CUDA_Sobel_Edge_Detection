@@ -11,10 +11,6 @@ extern int maxPos;
 
 void convertToGrayscale(pixel *src, int16_t *dst, const int len);
 
-//void gaussianBlur(int16_t * src, int16_t *dst, matrix * mat, const int width, const int height);
-
-//void sobel(int16_t * src, int16_t *dst, matrix * mat, const int width, const int height);
-
 void gaussianBlur(int16_t * src, int16_t *dst, const int width, const int height);
 
 void sobel_gx(int16_t * src, int16_t *dst, const int width, const int height);
