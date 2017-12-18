@@ -2,6 +2,7 @@
 #include "img_seq.h"
 #include "img_helper.h"
 
+
 #define SEQTIME 0
 
 int16_t maxPixel;
@@ -23,9 +24,9 @@ void makeImage(int16_t *src, Mat *dst)
 	{
 		for (int c = 0; c < dst->cols; c++)
 		{
-			dst->at<Vec3b>(r, c)[0] = src[c + r * dst->cols];
-			dst->at<Vec3b>(r, c)[1] = src[c + r * dst->cols];
-			dst->at<Vec3b>(r, c)[2] = src[c + r * dst->cols];
+			dst->at<Vec3b>(r, c)[0] = (uchar)src[c + r * dst->cols];
+			dst->at<Vec3b>(r, c)[1] = (uchar)src[c + r * dst->cols];
+			dst->at<Vec3b>(r, c)[2] = (uchar)src[c + r * dst->cols];
 		}
 	}
 
@@ -34,7 +35,6 @@ void makeImage(int16_t *src, Mat *dst)
 void gaussianBlur(int16_t * src, int16_t * dst, const int width, const int height)
 {
 	int element;
-	int i, j;
 	const int elements = width * height;
 
 	for (int r = 0; r < height; r++)
@@ -161,8 +161,8 @@ void normalize(int16_t *src, const int width, const int height) {
 	/* Since it is a 2D image we can unroll with 2 to gain performance */
 	for (int i = 0; i <elements; i+=2)
 	{
-		src[i] = src[i] * factor;	
-		src[i+1] = src[i+1] * factor;
+		src[i] = (int16_t)(src[i] * factor);	
+		src[i+1] = (int16_t)(src[i+1] * factor);
 	}
 }
 

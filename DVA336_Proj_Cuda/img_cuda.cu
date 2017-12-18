@@ -59,7 +59,6 @@ __global__ void kernel_gaussian(int16_t * src, int16_t * dst, matrix mat, const 
 save result in dst */
 __global__ void kernel_sobel(int16_t * src, int16_t * dst, matrix mat, const int width, const int height) {
 	int index = threadIdx.x + blockIdx.x * blockDim.x;
-	int pixelValue;
 	int pixelAcc = 0;
 	const int noElements = width * height;
 
