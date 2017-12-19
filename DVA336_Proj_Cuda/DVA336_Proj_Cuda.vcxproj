@@ -96,7 +96,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="img_seq.cpp" />
-    <ClCompile Include="img_helper.h" />
+    <ClInclude Include="img_helper.h" />
     <ClCompile Include="img_helper.cpp" />
     <ClCompile Include="img_structures.cpp" />
     <ClCompile Include="main.cpp" />

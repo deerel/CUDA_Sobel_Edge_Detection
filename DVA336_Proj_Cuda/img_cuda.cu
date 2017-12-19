@@ -1,10 +1,17 @@
-#include "img_cuda.h"
-#include "cuda_runtime.h"
-#include "img_helper.h"
-#include "device_launch_parameters.h"
-
 #include <chrono>
 #include <stdio.h>
+
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+
+#ifndef CUDA
+#include "img_cuda.h"
+#endif
+
+#ifndef HELPER
+#include "img_helper.h"
+#endif
+
 
 using namespace cv;
 using namespace std;

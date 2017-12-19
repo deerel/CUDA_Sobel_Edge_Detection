@@ -1,5 +1,6 @@
-#pragma once
+#ifndef STRUCTURES
 #include "img_structures.h"
+#endif
 
 #ifndef OPENCV
 #include "opencv2\opencv.hpp"

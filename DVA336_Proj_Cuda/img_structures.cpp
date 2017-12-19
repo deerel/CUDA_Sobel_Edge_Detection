@@ -1,4 +1,6 @@
+#ifndef STRUCTURES
 #include "img_structures.h"
+#endif
 
 void getGaussianKernel(matrix *mat)
 {

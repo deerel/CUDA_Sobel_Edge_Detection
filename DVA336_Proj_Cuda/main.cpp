@@ -1,9 +1,22 @@
 #include <iostream>
 #include <chrono>
 
+#ifndef SEQUENTIAL
 #include "img_seq.h"
-#include "img_cuda.h"
+#endif
+
+#ifndef STRUCTURES
+#include "img_structures.h"
+#endif
+
+#ifndef HELPER
 #include "img_helper.h"
+#endif
+
+#ifndef CUDA
+#include "img_cuda.h"
+#endif
+
 
 using namespace cv;
 using namespace std;

@@ -7,12 +7,12 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="img_structures.cpp" />
     <ClCompile Include="img_helper.cpp" />
-    <ClCompile Include="img_helper.h" />
     <ClCompile Include="img_seq.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="img_structures.h" />
     <ClInclude Include="img_cuda.h" />
     <ClInclude Include="img_seq.h" />
+    <ClInclude Include="img_helper.h" />
   </ItemGroup>
 </Project>

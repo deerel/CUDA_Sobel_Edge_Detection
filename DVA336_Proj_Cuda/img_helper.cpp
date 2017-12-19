@@ -1,4 +1,6 @@
+#ifndef HELPER
 #include "img_helper.h"
+#endif
 
 using namespace cv;
 

@@ -1,6 +1,12 @@
 #include <chrono>
+
+#ifndef SEQUENTIAL
 #include "img_seq.h"
+#endif
+
+#ifndef HELPER
 #include "img_helper.h"
+#endif
 
 
 #define SEQTIME 0
