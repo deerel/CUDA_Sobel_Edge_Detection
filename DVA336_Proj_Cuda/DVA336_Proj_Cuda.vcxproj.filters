@@ -5,7 +5,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="img_cuda.cpp" />
     <ClCompile Include="img_structures.cpp" />
     <ClCompile Include="img_helper.cpp" />
     <ClCompile Include="img_helper.h" />

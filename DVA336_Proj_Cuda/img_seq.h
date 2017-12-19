@@ -1,8 +1,10 @@
 #pragma once
-
-#include "opencv2\opencv.hpp"
 #include "img_structures.h"
 #include <stdint.h>
+
+#ifndef OPENCV
+#include "opencv2\opencv.hpp"
+#endif
 
 using namespace cv;
 

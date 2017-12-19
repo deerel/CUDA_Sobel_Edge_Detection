@@ -1,4 +1,3 @@
-#include "opencv2\opencv.hpp"
 #include "img_cuda.h"
 #include "cuda_runtime.h"
 #include "img_helper.h"
